@@ -1,0 +1,12 @@
+# Build output
+target/
+
+# Match data
+matches/
+
+# Generated CSV files
+*.csv
+
+# IDE files
+.vscode/
+.idea/
