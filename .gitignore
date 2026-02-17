@@ -1,0 +1,12 @@
+# Ignore build output
+target/
+
+# Ignore match JSON data
+matches/
+
+# Ignore generated CSV outputs
+*.csv
+
+# IDE stuff
+.vscode/
+.idea/
