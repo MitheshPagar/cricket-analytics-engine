@@ -1,5 +1,0 @@
-target/
-*.csv
-matches/
-.vscode/
-.idea/
