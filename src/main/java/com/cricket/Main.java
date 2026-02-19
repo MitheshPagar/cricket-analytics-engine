@@ -67,6 +67,7 @@ public class Main {
     }
 
     
+    @SuppressWarnings({"CallToPrintStackTrace", "UseSpecificCatch"})
     private static void processMatch(
             File file,
             ObjectMapper mapper,
