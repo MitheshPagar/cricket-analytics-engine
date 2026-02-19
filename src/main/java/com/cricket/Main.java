@@ -61,7 +61,7 @@ public class Main {
         System.out.println("✅ Baselines ready for simulation");
 
         
-        exportSimSheet(batterStats, bowlerStats);
+        exportSimSheet(batterStats, bowlerStats, baselineCalculator);
 
         System.out.println("🏁 Pipeline completed successfully");
     }
@@ -141,34 +141,32 @@ public class Main {
 
     
     private static void exportSimSheet(
-            Map<String, Map<String, Stats>> batterStats,
-            Map<String, Map<String, Stats>> bowlerStats
-    ) throws Exception {
+        Map<String, Map<String, Stats>> batterStats,
+        Map<String, Map<String, Stats>> bowlerStats,
+        BaselineCalculator baselineCalculator
+) throws Exception {
 
         CsvWriterUtil csv = new CsvWriterUtil();
-        csv.open("sim_stats.csv");
+        csv.open("sim_stats_nerfed.csv"); // new file to compare with old one
 
         List<String> header = new ArrayList<>();
         header.add("Player");
 
-        
         for (String role : ROLE_ORDER) {
             header.add(role + " Avg");
             header.add(role + " SR");
-            header.add(role + " RunsPerBall");
-            header.add(role + " WicketsPerBall");
+            header.add(role + " Adj_RPB");   // Nerfed Runs Per Ball
+            header.add(role + " Adj_WPB");   // Nerfed Wickets Per Ball
+            header.add(role + " Balls");     // Keep sample size for context
         }
 
-        
-        header.add("LHB BowlAvg");
-        header.add("LHB BowlSR");
-        header.add("LHB Economy");
-        header.add("LHB WicketsPerBall");
+        header.add("LHB Adj_RPB_Conceded");
+        header.add("LHB Adj_WPB");
+        header.add("LHB Balls");
 
-        header.add("RHB BowlAvg");
-        header.add("RHB BowlSR");
-        header.add("RHB Economy");
-        header.add("RHB WicketsPerBall");
+        header.add("RHB Adj_RPB_Conceded");
+        header.add("RHB Adj_WPB");
+        header.add("RHB Balls");
 
         csv.writeHeader(header.toArray(new String[0]));
 
@@ -181,41 +179,53 @@ public class Main {
             List<Object> row = new ArrayList<>();
             row.add(player);
 
-            // Batting Section
+            // -------------------------
+            // BATTING SECTION (NERFED)
+            // -------------------------
             Map<String, Stats> batMap = batterStats.getOrDefault(player, new HashMap<>());
 
             for (String role : ROLE_ORDER) {
                 Stats s = batMap.getOrDefault(role, new Stats());
 
+                double baselineRPB = baselineCalculator.getBaselineRunsPerBallForRole(role);
+                double baselineWPB = baselineCalculator.getBaselineWicketsPerBallForRole(role);
+
+                double adjRPB = s.getAdjustedRunsPerBall(baselineRPB);
+                double adjWPB = s.getAdjustedWicketsPerBall(baselineWPB);
+
                 row.add(round(s.getBattingAverage()));
                 row.add(round(s.getBattingStrikeRate()));
-                row.add(round(s.getRunsPerBall()));
-                row.add(round(s.getWicketsPerBall()));
+                row.add(round(adjRPB));   // 🔥 Nerfed stat
+                row.add(round(adjWPB));   // 🔥 Nerfed stat
+                row.add(s.getBalls());    // sample size visibility
             }
 
-            // Bowling Section
             Map<String, Stats> bowlMap = bowlerStats.getOrDefault(player, new HashMap<>());
 
             Stats vsLHB = bowlMap.getOrDefault("LHB", new Stats());
-            row.add(round(vsLHB.getBowlingAverage()));
-            row.add(round(vsLHB.getBowlingStrikeRate()));
-            row.add(round(vsLHB.getEconomy()));
-            row.add(round(vsLHB.getWicketsPerBall()));
+            double lhbBaselineRPB = baselineCalculator.getLhbRunsPerBall();
+            double lhbBaselineWPB = baselineCalculator.getLhbWicketsPerBall();
+
+            row.add(round(vsLHB.getAdjustedRunsPerBall(lhbBaselineRPB)));
+            row.add(round(vsLHB.getAdjustedWicketsPerBall(lhbBaselineWPB)));
+            row.add(vsLHB.getBalls());
 
             Stats vsRHB = bowlMap.getOrDefault("RHB", new Stats());
-            row.add(round(vsRHB.getBowlingAverage()));
-            row.add(round(vsRHB.getBowlingStrikeRate()));
-            row.add(round(vsRHB.getEconomy()));
-            row.add(round(vsRHB.getWicketsPerBall()));
+            double rhbBaselineRPB = baselineCalculator.getRhbRunsPerBall();
+            double rhbBaselineWPB = baselineCalculator.getRhbWicketsPerBall();
+
+            row.add(round(vsRHB.getAdjustedRunsPerBall(rhbBaselineRPB)));
+            row.add(round(vsRHB.getAdjustedWicketsPerBall(rhbBaselineWPB)));
+            row.add(vsRHB.getBalls());
 
             csv.writeRow(row.toArray());
         }
 
         csv.close();
-        System.out.println("sim_stats.csv generated (Derived + Model Ready)");
+        System.out.println("✅ sim_stats_nerfed.csv generated (with 500-ball confidence nerf)");
     }
 
     private static double round(double value) {
-        return Math.round(value * 100.0) / 100.0;
+        return Math.round(value * 1000.0) / 1000.0; // more precision for modeling
     }
 }
