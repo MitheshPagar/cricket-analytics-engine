@@ -26,15 +26,20 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        System.out.println("Loading player roles...");
+        System.out.println("🚀 Starting Cricket Stats Engine...");
+
+        
         PlayerRoleLoader roleLoader = new PlayerRoleLoader();
         roleLoader.load("playerRoles.csv");
+        System.out.println("✅ Player roles loaded");
 
         ObjectMapper mapper = new ObjectMapper();
 
+        
         Map<String, Map<String, Stats>> batterStats = new HashMap<>();
         Map<String, Map<String, Stats>> bowlerStats = new HashMap<>();
 
+        
         Files.list(Path.of("matches"))
                 .filter(p -> p.toString().endsWith(".json"))
                 .forEach(path -> processMatch(
@@ -45,14 +50,23 @@ public class Main {
                         bowlerStats
                 ));
 
-        System.out.println("Aggregation complete");
-        System.out.println("Batters tracked: " + batterStats.size());
-        System.out.println("Bowlers tracked: " + bowlerStats.size());
+        System.out.println("📊 Aggregation complete");
+        System.out.println("Total batters tracked: " + batterStats.size());
+        System.out.println("Total bowlers tracked: " + bowlerStats.size());
 
+        
+        System.out.println("🧠 Computing baselines...");
+        BaselineCalculator baselineCalculator = new BaselineCalculator();
+        baselineCalculator.compute(batterStats, bowlerStats);
+        System.out.println("✅ Baselines ready for simulation");
+
+        
         exportSimSheet(batterStats, bowlerStats);
+
+        System.out.println("🏁 Pipeline completed successfully");
     }
 
-
+    
     private static void processMatch(
             File file,
             ObjectMapper mapper,
@@ -75,16 +89,16 @@ public class Main {
                         String bowlRole = roleLoader.getBowlRole(bowler);
                         String batterHand = roleLoader.getBatRole(batter);
 
+                        
                         boolean isWide = delivery.has("extras")
                                 && delivery.get("extras").has("wides");
 
-                        if (isWide) continue; // ignore wides completely
+                        if (isWide) continue;
 
                         int batterRuns = delivery.get("runs").get("batter").asInt();
                         int totalRuns = delivery.get("runs").get("total").asInt();
 
                         boolean isWicket = false;
-
                         if (delivery.has("wickets")) {
                             for (JsonNode wicket : delivery.get("wickets")) {
                                 String outPlayer = wicket.get("player_out").asText();
@@ -94,7 +108,7 @@ public class Main {
                             }
                         }
 
-
+                        
                         if (bowlRole != null && !bowlRole.isBlank()) {
 
                             batterStats
@@ -105,7 +119,7 @@ public class Main {
                             batStats.recordBall(batterRuns, isWicket);
                         }
 
-
+                        
                         if (batterHand != null && !batterHand.isBlank()) {
 
                             bowlerStats
@@ -120,16 +134,16 @@ public class Main {
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Error processing " + file.getName());
+            System.err.println("❌ Error processing match: " + file.getName());
             e.printStackTrace();
         }
     }
 
-
+    
     private static void exportSimSheet(
-        Map<String, Map<String, Stats>> batterStats,
-        Map<String, Map<String, Stats>> bowlerStats
-        ) throws Exception {
+            Map<String, Map<String, Stats>> batterStats,
+            Map<String, Map<String, Stats>> bowlerStats
+    ) throws Exception {
 
         CsvWriterUtil csv = new CsvWriterUtil();
         csv.open("sim_stats.csv");
@@ -137,6 +151,7 @@ public class Main {
         List<String> header = new ArrayList<>();
         header.add("Player");
 
+        
         for (String role : ROLE_ORDER) {
             header.add(role + " Avg");
             header.add(role + " SR");
@@ -144,6 +159,7 @@ public class Main {
             header.add(role + " WicketsPerBall");
         }
 
+        
         header.add("LHB BowlAvg");
         header.add("LHB BowlSR");
         header.add("LHB Economy");
@@ -165,13 +181,10 @@ public class Main {
             List<Object> row = new ArrayList<>();
             row.add(player);
 
-            // -------------------------
             // Batting Section
-            // -------------------------
             Map<String, Stats> batMap = batterStats.getOrDefault(player, new HashMap<>());
 
             for (String role : ROLE_ORDER) {
-
                 Stats s = batMap.getOrDefault(role, new Stats());
 
                 row.add(round(s.getBattingAverage()));
@@ -180,6 +193,7 @@ public class Main {
                 row.add(round(s.getWicketsPerBall()));
             }
 
+            // Bowling Section
             Map<String, Stats> bowlMap = bowlerStats.getOrDefault(player, new HashMap<>());
 
             Stats vsLHB = bowlMap.getOrDefault("LHB", new Stats());
@@ -198,7 +212,7 @@ public class Main {
         }
 
         csv.close();
-        System.out.println("✅ sim_stats.csv generated (Derived Metrics)");
+        System.out.println("sim_stats.csv generated (Derived + Model Ready)");
     }
 
     private static double round(double value) {
