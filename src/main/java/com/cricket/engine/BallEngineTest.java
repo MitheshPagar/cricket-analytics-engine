@@ -105,6 +105,7 @@ public class BallEngineTest {
     // ----------------------------
     // JSON Processing (Same as Main)
     // ----------------------------
+    @SuppressWarnings({"UseSpecificCatch", "CallToPrintStackTrace"})
     private static void processMatch(
             File file,
             ObjectMapper mapper,
