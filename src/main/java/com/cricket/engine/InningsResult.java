@@ -26,8 +26,10 @@ public class InningsResult {
         return balls;
     }
 
-    public double getOvers(){
-        return balls / 6.0;
+    public String getOvers(){
+        int fullOvers = balls / 6;
+        int remainingBalls = balls % 6;
+        return fullOvers + "." + remainingBalls;
     }
 
     public double getRunRate() {

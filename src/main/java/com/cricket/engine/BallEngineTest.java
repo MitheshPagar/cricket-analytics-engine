@@ -3,7 +3,7 @@ package com.cricket.engine;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +18,7 @@ public class BallEngineTest {
 
     public static void main(String[] args) throws Exception {
 
-        System.out.println("🚀 Building stats for BallEngine test...");
+        System.out.println("🚀 Building stats for Team vs Team simulation...");
 
         PlayerRoleLoader roleLoader = new PlayerRoleLoader();
         roleLoader.load("playerRoles.csv");
@@ -28,9 +28,7 @@ public class BallEngineTest {
         Map<String, Map<String, Stats>> batterStats = new HashMap<>();
         Map<String, Map<String, Stats>> bowlerStats = new HashMap<>();
 
-        // ----------------------------
-        // Build stats from JSON
-        // ----------------------------
+        // Aggregate stats from JSON
         Files.list(Paths.get("matches"))
                 .filter(p -> p.toString().endsWith(".json"))
                 .forEach(path -> processMatch(
@@ -43,52 +41,61 @@ public class BallEngineTest {
 
         System.out.println("✅ Aggregation complete");
 
-        // ----------------------------
-        // Compute baselines
-        // ----------------------------
         BaselineCalculator baselineCalculator = new BaselineCalculator();
         baselineCalculator.compute(batterStats, bowlerStats);
 
         System.out.println("✅ Baselines ready");
 
-        // ----------------------------
-        // Create Engines
-        // ----------------------------
         BallEngine ballEngine = new BallEngine(
                 batterStats,
                 bowlerStats,
                 baselineCalculator
         );
 
-        InningsEngine inningsEngine = new InningsEngine(ballEngine);
+        InningsEngine inningsEngine = new InningsEngine(ballEngine, roleLoader);
 
         // ----------------------------
-        // Select XI
+        // CUSTOM TEAM A (Batting)
         // ----------------------------
-        List<String> battingXI = new ArrayList<>(batterStats.keySet()).subList(0, 11);
-        List<String> bowlingXI = new ArrayList<>(bowlerStats.keySet()).subList(0, 5);
+        List<String> teamA = Arrays.asList(
+                "RG Sharma",
+                "Shubman Gill",
+                "CA Pujara",
+                "V Kohli",
+                "AM Rahane",
+                "RR Pant",
+                "RA Jadeja",
+                "R Ashwin",
+                "AR Patel",
+                "Mohammed Siraj",
+                "JJ Bumrah"
+        );
 
-        System.out.println("Batting XI: " + battingXI);
-        System.out.println("Bowling XI: " + bowlingXI);
+        // ----------------------------
+        // CUSTOM TEAM B (Bowling)
+        // ----------------------------
+        List<String> teamB = Arrays.asList(
+                "PJ Cummins",
+                "MA Starc",
+                "DW Steyn",
+                "SK Warne",
+                "K Rabada"
+        );
 
-        // ----------------------------
-        // Simulate Innings (90 overs)
-        // ----------------------------
+        System.out.println("Batting XI: " + teamA);
+        System.out.println("Bowling Attack: " + teamB);
+
+        // Simulate 90 overs
         InningsResult result = inningsEngine.simulateInnings(
-                battingXI,
-                bowlingXI,
-                "RF",   // Using RF role for testing
-                "RHB",  // Assume right-handed striker for now
-                90      // 90 overs = full Test day
+                teamA,
+                teamB,
+                90
         );
 
         System.out.println("🏏 Test Innings Result: " + result);
-        System.out.println("🏁 Innings simulation complete");
+        System.out.println("🏁 Simulation complete");
     }
 
-    // ----------------------------
-    // JSON Aggregation Logic
-    // ----------------------------
     private static void processMatch(
             File file,
             ObjectMapper mapper,
