@@ -2,8 +2,10 @@ package com.cricket.engine;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.cricket.BaselineCalculator;
@@ -29,7 +31,7 @@ public class BallEngineTest {
         // ----------------------------
         // Build stats from JSON
         // ----------------------------
-        Files.list(Path.of("matches"))
+        Files.list(Paths.get("matches"))
                 .filter(p -> p.toString().endsWith(".json"))
                 .forEach(path -> processMatch(
                         path.toFile(),
@@ -50,7 +52,7 @@ public class BallEngineTest {
         System.out.println("✅ Baselines ready");
 
         // ----------------------------
-        // Create BallEngine
+        // Create Engines
         // ----------------------------
         BallEngine ballEngine = new BallEngine(
                 batterStats,
@@ -58,54 +60,35 @@ public class BallEngineTest {
                 baselineCalculator
         );
 
-        // Pick random batter + bowler
-        String testBatter = batterStats.keySet().iterator().next();
-        String testBowler = bowlerStats.keySet().iterator().next();
-
-        System.out.println("Testing Batter: " + testBatter);
-        System.out.println("Testing Bowler: " + testBowler);
+        InningsEngine inningsEngine = new InningsEngine(ballEngine);
 
         // ----------------------------
-        // Simulate 10,000 balls
+        // Select XI
         // ----------------------------
-        int balls = 10000;
-        int runs = 0;
-        int wickets = 0;
+        List<String> battingXI = new ArrayList<>(batterStats.keySet()).subList(0, 11);
+        List<String> bowlingXI = new ArrayList<>(bowlerStats.keySet()).subList(0, 5);
 
-        Map<BallOutcome, Integer> distribution = new HashMap<>();
+        System.out.println("Batting XI: " + battingXI);
+        System.out.println("Bowling XI: " + bowlingXI);
 
-        for (int i = 0; i < balls; i++) {
+        // ----------------------------
+        // Simulate Innings (90 overs)
+        // ----------------------------
+        InningsResult result = inningsEngine.simulateInnings(
+                battingXI,
+                bowlingXI,
+                "RF",   // Using RF role for testing
+                "RHB",  // Assume right-handed striker for now
+                90      // 90 overs = full Test day
+        );
 
-            BallOutcome outcome = ballEngine.simulateBall(
-                    testBatter,
-                    testBowler,
-                    "RF",     // use a bowl role you know exists
-                    "RHB"     // use hand type
-            );
-
-            distribution.merge(outcome, 1, Integer::sum);
-
-            if (outcome.isWicket()) {
-                wickets++;
-            } else {
-                runs += outcome.getRuns();
-            }
-        }
-
-        System.out.println("Balls: " + balls);
-        System.out.println("Runs: " + runs);
-        System.out.println("Wickets: " + wickets);
-        System.out.println("Runs Per Ball: " + ((double) runs / balls));
-        System.out.println("Wicket Rate: " + ((double) wickets / balls));
-        System.out.println("Distribution: " + distribution);
-
-        System.out.println("🏁 BallEngine test complete");
+        System.out.println("🏏 Test Innings Result: " + result);
+        System.out.println("🏁 Innings simulation complete");
     }
 
     // ----------------------------
-    // JSON Processing (Same as Main)
+    // JSON Aggregation Logic
     // ----------------------------
-    @SuppressWarnings({"UseSpecificCatch", "CallToPrintStackTrace"})
     private static void processMatch(
             File file,
             ObjectMapper mapper,
@@ -145,7 +128,6 @@ public class BallEngineTest {
                             }
                         }
 
-                        // Batting stats
                         if (bowlRole != null) {
                             batterStats
                                     .computeIfAbsent(batter, k -> new HashMap<>())
@@ -153,7 +135,6 @@ public class BallEngineTest {
                                     .recordBall(batterRuns, isWicket);
                         }
 
-                        // Bowling stats
                         if (batterHand != null) {
                             bowlerStats
                                     .computeIfAbsent(bowler, k -> new HashMap<>())
