@@ -51,7 +51,7 @@ public class BallEngineTest {
                 1.0, // dryFactor
                 1.0, // bounceFactor
                 1.4, // flatFactor
-                1.2  // boundaryFactor
+                1.4  // boundaryFactor
         );
 
         BallEngine ballEngine = new BallEngine(
@@ -85,7 +85,7 @@ public class BallEngineTest {
         // ----------------------------
         List<String> teamB = Arrays.asList(
                 "PJ Cummins",
-                "MA Starc",
+                "JJ Bumrah",
                 "R Ashwin",
                 "RA Jadeja",
                 "K Rabada"

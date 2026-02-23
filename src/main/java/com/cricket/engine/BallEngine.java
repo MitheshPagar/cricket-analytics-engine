@@ -55,13 +55,30 @@ public class BallEngine {
         double finalWPB = (batterWPB + bowlerWPB) / 2.0;
 
         //Pitch Modifiers
-        if(bowlRole.contains("F")){
+        boolean isFast = bowlRole.contains("F");
+        boolean isSpin = bowlRole.contains("S");
+
+        if(isFast){
             finalWPB *= pitch.getGreenFactor();
             finalWPB *= pitch.getBounceFactor();
-        } else if(bowlRole.contains("S")){
+        }
+
+        if(isSpin){
             finalWPB *= pitch.getDryFactor();
         }
+
         finalRPB *= pitch.getFlatFactor();
+
+        double dotAdjusment = 1.0;
+
+        if(isFast){
+            dotAdjusment *= pitch.getGreenFactor();
+        }
+
+        if(isSpin){
+            dotAdjusment *= pitch.getDryFactor();
+        }
+
 
 
         finalRPB = clamp(finalRPB, 0.2, 2.0);
@@ -78,11 +95,16 @@ public class BallEngine {
         double runRand = random.nextDouble();
 
 
-        double dotProb = 0.55;
+        double dotProb = 0.57 * dotAdjusment;
         double oneProb = 0.25;
         double twoProb = 0.08;
         double fourProb = 0.09 * (finalRPB / 1.0) * pitch.getBoundaryFactor();
         double sixProb = 0.02 * (finalRPB / 1.2) * pitch.getBoundaryFactor();
+
+        if(isSpin){
+            fourProb *= (1.0/pitch.getDryFactor());
+            sixProb *= (1.0/pitch.getDryFactor());
+        }
 
         double cumulative = dotProb;
         if (runRand < cumulative) return BallOutcome.DOT;
