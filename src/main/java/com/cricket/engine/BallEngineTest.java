@@ -85,15 +85,13 @@ public class BallEngineTest {
         System.out.println("Batting XI: " + teamA);
         System.out.println("Bowling Attack: " + teamB);
 
-        // Simulate 90 overs
-        InningsResult result = inningsEngine.simulateInnings(
-                teamA,
-                teamB,
-                90
-        );
+        System.out.println("\n Simulating 10 innings");
+        for (int i = 0; i < 10; i++){
+            InningsResult result = inningsEngine.simulateInnings(teamA, teamB, 90);
+            System.out.println("Innings " + (i + 1) + ": " + result);
+        }
 
-        System.out.println("🏏 Test Innings Result: " + result);
-        System.out.println("🏁 Simulation complete");
+        System.out.println("\n✅ Simulation complete");
     }
 
     private static void processMatch(
