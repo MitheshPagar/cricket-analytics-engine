@@ -50,8 +50,8 @@ public class BallEngineTest {
                 1.0, // greenFactor
                 1.0, // dryFactor
                 1.0, // bounceFactor
-                1.4, // flatFactor
-                1.4  // boundaryFactor
+                1.0, // flatFactor
+                1.0  // boundaryFactor
         );
 
         BallEngine ballEngine = new BallEngine(
