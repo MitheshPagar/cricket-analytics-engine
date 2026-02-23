@@ -47,9 +47,9 @@ public class BallEngineTest {
         System.out.println("✅ Baselines ready");
 
         PitchProfile pitch = new PitchProfile(
-                1.0, // greenFactor
+                1.5, // greenFactor
                 1.0, // dryFactor
-                1.0, // bounceFactor
+                1.5, // bounceFactor
                 1.0, // flatFactor
                 1.0  // boundaryFactor
         );

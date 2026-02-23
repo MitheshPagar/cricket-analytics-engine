@@ -58,12 +58,12 @@ public class BallEngine {
         boolean isFast = bowlRole.contains("F");
         boolean isSpin = bowlRole.contains("S");
 
-        double fastInfluence = 0.6;
-        double spinInfluence = 0.7;
+        double fastInfluence = 0.15;
+        double spinInfluence = 0.3;
 
         if(isFast){
-            finalWPB *= 1 + (pitch.getGreenFactor() - 1) * fastInfluence;
-            finalWPB *= 1 + (pitch.getBounceFactor()-1) * 0.5;
+            double seamCondition = (pitch.getGreenFactor() + pitch.getBounceFactor()) / 2.0;
+            finalWPB *= 1 + (seamCondition - 1) * fastInfluence;
         }
 
         if(isSpin){
@@ -71,7 +71,7 @@ public class BallEngine {
         }
 
         finalWPB *= 1 - (pitch.getFlatFactor() - 1) * 0.4;
-        finalRPB *= 1 + (pitch.getFlatFactor() - 1) * 0.6;
+        finalRPB *= 1 + (pitch.getFlatFactor() - 1) * 0.4;
 
         double dotAdjusment = 1.0;
 
@@ -102,11 +102,12 @@ public class BallEngine {
         double dotProb = 0.57 * dotAdjusment;
 
         if(isFast){
-            dotProb *= 1 + (pitch.getGreenFactor() - 1) * 0.4;
+            double seamCondition = (pitch.getGreenFactor() + pitch.getBounceFactor()) / 2.0;
+            dotProb *= 1 + (seamCondition - 1) * 0.05;
         }
 
         if(isSpin){
-            dotProb *= 1 + (pitch.getDryFactor() - 1) * 0.5;
+            dotProb *= 1 + (pitch.getDryFactor() - 1) * 0.2;
         }
 
         dotProb *= 1 - (pitch.getFlatFactor() - 1) * 0.4;
@@ -114,7 +115,7 @@ public class BallEngine {
         double oneProb = 0.25;
         double twoProb = 0.08;
 
-        double boundaryMultiplier = 1 + (pitch.getBoundaryFactor() - 1) * 0.7;
+        double boundaryMultiplier = 1 + (pitch.getBoundaryFactor() - 1) * 0.4;
 
         double fourProb = 0.09 * (finalRPB / 1.0) * boundaryMultiplier;
         double sixProb = 0.02 * (finalRPB / 1.2) * boundaryMultiplier;
