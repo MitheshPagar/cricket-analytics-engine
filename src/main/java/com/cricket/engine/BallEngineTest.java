@@ -46,10 +46,19 @@ public class BallEngineTest {
 
         System.out.println("✅ Baselines ready");
 
+        PitchProfile pitch = new PitchProfile(
+                1.0, // greenFactor
+                1.0, // dryFactor
+                1.0, // bounceFactor
+                1.4, // flatFactor
+                1.2  // boundaryFactor
+        );
+
         BallEngine ballEngine = new BallEngine(
                 batterStats,
                 bowlerStats,
-                baselineCalculator
+                baselineCalculator,
+                pitch
         );
 
         InningsEngine inningsEngine = new InningsEngine(ballEngine, roleLoader);
@@ -77,8 +86,8 @@ public class BallEngineTest {
         List<String> teamB = Arrays.asList(
                 "PJ Cummins",
                 "MA Starc",
-                "DW Steyn",
-                "SK Warne",
+                "R Ashwin",
+                "RA Jadeja",
                 "K Rabada"
         );
 
@@ -94,6 +103,7 @@ public class BallEngineTest {
         System.out.println("\n✅ Simulation complete");
     }
 
+    @SuppressWarnings({"UseSpecificCatch", "CallToPrintStackTrace"})
     private static void processMatch(
             File file,
             ObjectMapper mapper,

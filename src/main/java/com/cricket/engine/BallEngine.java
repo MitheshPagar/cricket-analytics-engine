@@ -11,17 +11,20 @@ public class BallEngine {
     private final Map<String, Map<String, Stats>> batterStats;
     private final Map<String, Map<String, Stats>> bowlerStats;
     private final BaselineCalculator baselineCalculator;
+    private final PitchProfile pitch;
 
     private final Random random = new Random();
 
     public BallEngine(
             Map<String, Map<String, Stats>> batterStats,
             Map<String, Map<String, Stats>> bowlerStats,
-            BaselineCalculator baselineCalculator
+            BaselineCalculator baselineCalculator,
+            PitchProfile pitch
     ) {
         this.batterStats = batterStats;
         this.bowlerStats = bowlerStats;
         this.baselineCalculator = baselineCalculator;
+        this.pitch = pitch;
     }
 
     public BallOutcome simulateBall(
@@ -51,9 +54,18 @@ public class BallEngine {
         double finalRPB = (batterRPB + bowlerRPB) / 2.0;
         double finalWPB = (batterWPB + bowlerWPB) / 2.0;
 
+        //Pitch Modifiers
+        if(bowlRole.contains("F")){
+            finalWPB *= pitch.getGreenFactor();
+            finalWPB *= pitch.getBounceFactor();
+        } else if(bowlRole.contains("S")){
+            finalWPB *= pitch.getDryFactor();
+        }
+        finalRPB *= pitch.getFlatFactor();
 
-        finalRPB = clamp(finalRPB, 0.2, 1.8);
-        finalWPB = clamp(finalWPB * 1.4, 0.01, 0.18);
+
+        finalRPB = clamp(finalRPB, 0.2, 2.0);
+        finalWPB = clamp(finalWPB, 0.01, 0.20);
 
         double r = random.nextDouble();
 
@@ -69,8 +81,8 @@ public class BallEngine {
         double dotProb = 0.55;
         double oneProb = 0.25;
         double twoProb = 0.08;
-        double fourProb = 0.09 * (finalRPB / 1.0);
-        double sixProb = 0.02 * (finalRPB / 1.2);
+        double fourProb = 0.09 * (finalRPB / 1.0) * pitch.getBoundaryFactor();
+        double sixProb = 0.02 * (finalRPB / 1.2) * pitch.getBoundaryFactor();
 
         double cumulative = dotProb;
         if (runRand < cumulative) return BallOutcome.DOT;
