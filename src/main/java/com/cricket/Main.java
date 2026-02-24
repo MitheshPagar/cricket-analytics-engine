@@ -227,4 +227,30 @@ public class Main {
         return Math.round(value * 1000.0) / 1000.0;
     }
 
+    public static StatsBundle buildStats() throws Exception {
+
+        PlayerRoleLoader roleLoader = new PlayerRoleLoader();
+        roleLoader.load("playerRoles.csv");
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        Map<String, Map<String, Stats>> batterStats = new HashMap<>();
+        Map<String, Map<String, Stats>> bowlerStats = new HashMap<>();
+
+        // Aggregate stats from JSON
+        Files.list(Path.of("matches"))
+                .filter(p -> p.toString().endsWith(".json"))
+                .forEach(path -> processMatch(
+                        path.toFile(),
+                        mapper,
+                        roleLoader,
+                        batterStats,
+                        bowlerStats
+                ));
+
+        BaselineCalculator baselineCalculator = new BaselineCalculator();
+        baselineCalculator.compute(batterStats, bowlerStats);
+
+        return new StatsBundle(batterStats, bowlerStats, baselineCalculator, roleLoader);
+    }
 }
