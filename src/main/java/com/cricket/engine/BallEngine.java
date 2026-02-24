@@ -11,7 +11,7 @@ public class BallEngine {
     private final Map<String, Map<String, Stats>> batterStats;
     private final Map<String, Map<String, Stats>> bowlerStats;
     private final BaselineCalculator baselineCalculator;
-    private final PitchProfile pitch;
+    private PitchProfile pitch;
 
     private final Random random = new Random();
 
@@ -58,31 +58,31 @@ public class BallEngine {
         boolean isFast = bowlRole.contains("F");
         boolean isSpin = bowlRole.contains("S");
 
-        double fastInfluence = 0.15;
+        double fastInfluence = 0.2;
         double spinInfluence = 0.3;
 
         if(isFast){
-            double seamCondition = (pitch.getGreenFactor() + pitch.getBounceFactor()) / 2.0;
+            double seamCondition = (pitch.getGreen() + pitch.getBounce()) / 2.0;
             finalWPB *= 1 + (seamCondition - 1) * fastInfluence;
         }
 
+
         if(isSpin){
-            finalWPB *= 1 + (pitch.getDryFactor()-1) * spinInfluence;
+            finalWPB *= 1 + (pitch.getDry()-1) * spinInfluence;
         }
 
-        finalWPB *= 1 - (pitch.getFlatFactor() - 1) * 0.4;
-        finalRPB *= 1 + (pitch.getFlatFactor() - 1) * 0.4;
+        finalWPB *= 1 - (pitch.getFlat() - 1) * 0.4;
+        finalRPB *= 1 + (pitch.getFlat() - 1) * 0.4;
 
         double dotAdjusment = 1.0;
 
         if(isFast){
-            dotAdjusment *= pitch.getGreenFactor();
+            dotAdjusment *= pitch.getGreen();
         }
 
         if(isSpin){
-            dotAdjusment *= pitch.getDryFactor();
+            dotAdjusment *= pitch.getDry();
         }
-
 
 
         finalRPB = clamp(finalRPB, 0.2, 2.0);
@@ -98,32 +98,46 @@ public class BallEngine {
 
         double runRand = random.nextDouble();
 
-
+        
         double dotProb = 0.57 * dotAdjusment;
 
         if(isFast){
-            double seamCondition = (pitch.getGreenFactor() + pitch.getBounceFactor()) / 2.0;
-            dotProb *= 1 + (seamCondition - 1) * 0.05;
+            double seamCondition = (pitch.getGreen() + pitch.getBounce()) / 2.0;
+            dotProb *= 1 + (seamCondition - 1) * 0.25;
         }
 
         if(isSpin){
-            dotProb *= 1 + (pitch.getDryFactor() - 1) * 0.2;
+            dotProb *= 1 + (pitch.getDry() - 1) * 0.08;
         }
 
-        dotProb *= 1 - (pitch.getFlatFactor() - 1) * 0.4;
+        dotProb *= 1 - (pitch.getFlat() - 1) * 0.3;
+        dotProb = clamp(dotProb, 0.3, 0.75);
 
         double oneProb = 0.25;
         double twoProb = 0.08;
 
-        double boundaryMultiplier = 1 + (pitch.getBoundaryFactor() - 1) * 0.4;
+        double boundaryMultiplier = 1 + (pitch.getBoundary() - 1) * 0.4;
+
+        if(isFast){
+            double seamCondition = (pitch.getGreen() + pitch.getBounce())/2.0;
+            boundaryMultiplier *= 1 - (seamCondition - 1) * 0.1;
+        }
 
         double fourProb = 0.09 * (finalRPB / 1.0) * boundaryMultiplier;
         double sixProb = 0.02 * (finalRPB / 1.2) * boundaryMultiplier;
 
         if(isSpin){
-            fourProb *= 1 + (pitch.getDryFactor() - 1) * 0.3;
-            sixProb *= 1 + (pitch.getDryFactor() - 1) * 0.5;
+            fourProb *= 1 - (pitch.getDry() - 1) * 0.2;
+            sixProb *= 1 - (pitch.getDry() - 1) * 0.3;
         }
+
+        double totalProb = dotProb + oneProb + twoProb + fourProb + sixProb;
+
+        dotProb /= totalProb;
+        oneProb /= totalProb;
+        twoProb /= totalProb;
+        fourProb /= totalProb;
+        sixProb /= totalProb;
 
         double cumulative = dotProb;
         if (runRand < cumulative) return BallOutcome.DOT;
@@ -145,5 +159,9 @@ public class BallEngine {
 
     private double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    public void setPitch(PitchProfile pitch) {
+        this.pitch = pitch;
     }
 }

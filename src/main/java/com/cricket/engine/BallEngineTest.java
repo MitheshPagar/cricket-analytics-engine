@@ -47,9 +47,9 @@ public class BallEngineTest {
         System.out.println("Baselines ready");
 
         PitchProfile pitch = new PitchProfile(
-                1.5, // greenFactor
+                1.0, // greenFactor
                 1.0, // dryFactor
-                1.5, // bounceFactor
+                1.0, // bounceFactor
                 1.0, // flatFactor
                 1.0  // boundaryFactor
         );
@@ -84,15 +84,15 @@ public class BallEngineTest {
         // CUSTOM TEAM B (Bowling)
         // ----------------------------
         List<String> teamB = Arrays.asList(
-                "PJ Cummins",
                 "JJ Bumrah",
+                "PJ Cummins",
+                "K Rabada",
                 "R Ashwin",
-                "RA Jadeja",
-                "K Rabada"
+                "RA Jadeja"
         );
 
-        System.out.println("Batting XI: " + teamA);
-        System.out.println("Bowling Attack: " + teamB);
+        System.out.println("Team A: " + teamA);
+        System.out.println("Team B: " + teamB);
 
         System.out.println("\n Simulating 10 innings");
         for (int i = 0; i < 10; i++){
@@ -164,4 +164,5 @@ public class BallEngineTest {
             e.printStackTrace();
         }
     }
+    
 }

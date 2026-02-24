@@ -1,6 +1,7 @@
 package com.cricket.engine;
 
 import java.util.List;
+import java.util.Random;
 
 import com.cricket.PlayerRoleLoader;
 
@@ -8,8 +9,10 @@ public class InningsEngine {
 
     private final BallEngine ballEngine;
     private final PlayerRoleLoader roleLoader;
+    private final Random random = new Random();
 
-    public InningsEngine(BallEngine ballEngine, PlayerRoleLoader roleLoader) {
+    public InningsEngine(BallEngine ballEngine,
+                         PlayerRoleLoader roleLoader) {
         this.ballEngine = ballEngine;
         this.roleLoader = roleLoader;
     }
@@ -29,6 +32,7 @@ public class InningsEngine {
         int nextBatterIndex = 2;
 
         int bowlerIndex = 0;
+        int oversByCurrentBowler = 0;
 
         while (wickets < 10 && balls < maxOvers * 6) {
 
@@ -38,11 +42,11 @@ public class InningsEngine {
             String bowlRole = roleLoader.getBowlRole(bowler);
             String batterHand = roleLoader.getBatRole(striker);
 
-            if (bowlRole == null || batterHand == null) {
-                // Skip unrealistic matchup
-                balls++;
-                continue;
-            }
+            // Fallback if role missing
+            if (bowlRole == null) bowlRole = "RF";
+            if (batterHand == null) batterHand = "RHB";
+
+            boolean isTail = strikerIndex >= 7;
 
             BallOutcome outcome = ballEngine.simulateBall(
                     striker,
@@ -57,6 +61,11 @@ public class InningsEngine {
 
                 wickets++;
 
+                // Last wicket fragility
+                if (wickets == 9 && random.nextDouble() < 0.15) {
+                    break;
+                }
+
                 if (nextBatterIndex < battingOrder.size()) {
                     strikerIndex = nextBatterIndex;
                     nextBatterIndex++;
@@ -67,6 +76,12 @@ public class InningsEngine {
             } else {
 
                 int runs = outcome.getRuns();
+
+                // Tail nerf: reduce big hitting reliability
+                if (isTail && runs >= 4 && random.nextDouble() < 0.25) {
+                    runs = 1;
+                }
+
                 totalRuns += runs;
 
                 // Strike rotation for odd runs
@@ -80,16 +95,26 @@ public class InningsEngine {
             // End of over logic
             if (balls % 6 == 0) {
 
-                // Swap strike
+                oversByCurrentBowler++;
+
+                // Swap strike at end of over
                 int temp = strikerIndex;
                 strikerIndex = nonStrikerIndex;
                 nonStrikerIndex = temp;
 
-                // Rotate bowler
-                bowlerIndex = (bowlerIndex + 1) % bowlingOrder.size();
+                // 5-over spell rotation
+                if (oversByCurrentBowler >= 5) {
+                    bowlerIndex =
+                            (bowlerIndex + 1) % bowlingOrder.size();
+                    oversByCurrentBowler = 0;
+                }
             }
         }
 
         return new InningsResult(totalRuns, wickets, balls);
+    }
+
+    public void setPitch(PitchProfile pitch) {
+        ballEngine.setPitch(pitch);
     }
 }
