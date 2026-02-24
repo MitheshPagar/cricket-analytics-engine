@@ -96,7 +96,7 @@ public class BallEngineTest {
 
         System.out.println("\n Simulating 10 innings");
         for (int i = 0; i < 10; i++){
-            InningsResult result = inningsEngine.simulateInnings(teamA, teamB, 90);
+            InningsResult result = inningsEngine.simulateInnings(teamA, teamB, 90, null);
             System.out.println("Innings " + (i + 1) + ": " + result);
         }
 

@@ -11,14 +11,14 @@ public class TestMatchSimulationMain {
 
     public static void main(String[] args) throws Exception {
 
-        System.out.println("🏏 Building Stats Pipeline...\n");
+        System.out.println("Building Stats Pipeline...\n");
 
         StatsBundle bundle = Main.buildStats();
 
         PitchProfile basePitch = new PitchProfile(
-                1.5,  // green
+                1.0,  // green
                 1.0,  // dry
-                1.5,  // bounce
+                1.0,  // bounce
                 1.0,  // flat
                 1.0   // boundary
         );

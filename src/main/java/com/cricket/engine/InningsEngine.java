@@ -20,7 +20,8 @@ public class InningsEngine {
     public InningsResult simulateInnings(
             List<String> battingOrder,
             List<String> bowlingOrder,
-            int maxOvers
+            int maxOvers,
+            Integer target
     ) {
 
         int totalRuns = 0;
@@ -83,6 +84,10 @@ public class InningsEngine {
                 }
 
                 totalRuns += runs;
+
+                if (target != null && totalRuns >= target) {
+                    break;
+                }
 
                 // Strike rotation for odd runs
                 if (runs % 2 == 1) {

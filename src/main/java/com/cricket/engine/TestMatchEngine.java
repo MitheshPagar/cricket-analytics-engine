@@ -24,11 +24,11 @@ public class TestMatchEngine {
         // =====================
         // 1st Innings
         // =====================
-        System.out.println("\n--- 1st Innings: "+ teamAName +" ---");
+        System.out.println("\n--- 1st Innings: " + teamAName + " ---");
 
         inningsEngine.setPitch(pitch.currentProfile());
         InningsResult aFirst =
-                inningsEngine.simulateInnings(teamA, teamB, 90);
+                inningsEngine.simulateInnings(teamA, teamB, 90, null);
 
         a1 = aFirst.getRuns();
         System.out.println(aFirst);
@@ -38,11 +38,11 @@ public class TestMatchEngine {
         // =====================
         // 2nd Innings
         // =====================
-        System.out.println("\n--- 2nd Innings:"+ teamBName +" ---");
+        System.out.println("\n--- 2nd Innings: " + teamBName + " ---");
 
         inningsEngine.setPitch(pitch.currentProfile());
         InningsResult bFirst =
-                inningsEngine.simulateInnings(teamB, teamA, 90);
+                inningsEngine.simulateInnings(teamB, teamA, 90, null);
 
         b1 = bFirst.getRuns();
         System.out.println(bFirst);
@@ -51,19 +51,17 @@ public class TestMatchEngine {
 
         int lead = a1 - b1;
 
-        // =====================
-        // Follow-On Check
-        // =====================
         boolean followOn = lead >= 200;
 
         if (followOn) {
+
             System.out.println("\nFollow-on enforced!");
 
-            System.out.println("\n--- 3rd Innings: "+ teamBName +" ---");
+            System.out.println("\n--- 3rd Innings: " + teamBName + " ---");
 
             inningsEngine.setPitch(pitch.currentProfile());
             InningsResult bSecond =
-                    inningsEngine.simulateInnings(teamB, teamA, 90);
+                    inningsEngine.simulateInnings(teamB, teamA, 90, null);
 
             b2 = bSecond.getRuns();
             System.out.println(bSecond);
@@ -73,32 +71,34 @@ public class TestMatchEngine {
             int target = (a1 - b1 - b2) + 1;
 
             if (target <= 0) {
-                System.out.println("\n" + teamBName + " wins by innings and " + (-target) + " runs!");
+                System.out.println("\n" + teamAName
+                        + " wins by an innings!");
                 return;
             }
 
-            System.out.println("\n--- 4th Innings: "+teamAName+ " (Chasing "
+            System.out.println("\n--- 4th Innings: "
+                    + teamAName + " (Chasing "
                     + target + ") ---");
 
             inningsEngine.setPitch(pitch.currentProfile());
             InningsResult aSecond =
-                    inningsEngine.simulateInnings(teamA, teamB, 90);
+                    inningsEngine.simulateInnings(teamA, teamB, 90, target);
 
-            a2 = aSecond.getRuns();
             System.out.println(aSecond);
 
-            printChaseResult(a2, target, teamAName);
+            printChaseResult(aSecond, target,
+                    teamAName, teamBName);
 
         } else {
 
             // =====================
             // Normal 3rd Innings
             // =====================
-            System.out.println("\n--- 3rd Innings: "+ teamAName +" ---");
+            System.out.println("\n--- 3rd Innings: " + teamAName + " ---");
 
             inningsEngine.setPitch(pitch.currentProfile());
             InningsResult aSecond =
-                    inningsEngine.simulateInnings(teamA, teamB, 90);
+                    inningsEngine.simulateInnings(teamA, teamB, 90, null);
 
             a2 = aSecond.getRuns();
             System.out.println(aSecond);
@@ -107,34 +107,48 @@ public class TestMatchEngine {
 
             int target = (a1 + a2 - b1) + 1;
 
-            System.out.println("\n--- 4th Innings: "+teamBName+" (Chasing "
+            System.out.println("\n--- 4th Innings: "
+                    + teamBName + " (Chasing "
                     + target + ") ---");
 
             inningsEngine.setPitch(pitch.currentProfile());
             InningsResult bSecond =
-                    inningsEngine.simulateInnings(teamB, teamA, 90);
+                    inningsEngine.simulateInnings(teamB, teamA, 90, target);
 
-            b2 = bSecond.getRuns();
             System.out.println(bSecond);
 
-            printChaseResult(b2, target, teamBName);
+            printChaseResult(bSecond, target,
+                    teamBName, teamAName);
         }
     }
 
-    private void printChaseResult(int runs,
+    private void printChaseResult(InningsResult result,
                                   int target,
-                                  String chasingTeam) {
+                                  String chasingTeam,
+                                  String defendingTeam) {
 
         System.out.println("\n============================");
 
+        int runs = result.getRuns();
+        int wickets = result.getWickets();
+
         if (runs >= target) {
+
+            int wicketsRemaining = 10 - wickets;
+
             System.out.println(chasingTeam
-                    + " wins by wickets!");
-        } else if (runs < target) {
-            System.out.println("Opponent wins by "
-                    + (target - runs - 1) + " runs");
+                    + " wins by "
+                    + wicketsRemaining
+                    + " wickets");
+
         } else {
-            System.out.println("Match Drawn");
+
+            int margin = target - runs - 1;
+
+            System.out.println(defendingTeam
+                    + " wins by "
+                    + margin
+                    + " runs");
         }
 
         System.out.println("============================");
