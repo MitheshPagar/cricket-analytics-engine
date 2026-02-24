@@ -18,7 +18,7 @@ public class BallEngineTest {
 
     public static void main(String[] args) throws Exception {
 
-        System.out.println("🚀 Building stats for Team vs Team simulation...");
+        System.out.println("Building stats for Team vs Team simulation...");
 
         PlayerRoleLoader roleLoader = new PlayerRoleLoader();
         roleLoader.load("playerRoles.csv");
@@ -39,12 +39,12 @@ public class BallEngineTest {
                         bowlerStats
                 ));
 
-        System.out.println("✅ Aggregation complete");
+        System.out.println("Aggregation complete");
 
         BaselineCalculator baselineCalculator = new BaselineCalculator();
         baselineCalculator.compute(batterStats, bowlerStats);
 
-        System.out.println("✅ Baselines ready");
+        System.out.println("Baselines ready");
 
         PitchProfile pitch = new PitchProfile(
                 1.5, // greenFactor
@@ -100,7 +100,7 @@ public class BallEngineTest {
             System.out.println("Innings " + (i + 1) + ": " + result);
         }
 
-        System.out.println("\n✅ Simulation complete");
+        System.out.println("\nSimulation complete");
     }
 
     @SuppressWarnings({"UseSpecificCatch", "CallToPrintStackTrace"})

@@ -26,12 +26,12 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        System.out.println("🚀 Starting Cricket Stats Engine...");
+        System.out.println("Starting Cricket Stats Engine...");
 
         
         PlayerRoleLoader roleLoader = new PlayerRoleLoader();
         roleLoader.load("playerRoles.csv");
-        System.out.println("✅ Player roles loaded");
+        System.out.println("Player roles loaded");
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -50,20 +50,20 @@ public class Main {
                         bowlerStats
                 ));
 
-        System.out.println("📊 Aggregation complete");
+        System.out.println("Aggregation complete");
         System.out.println("Total batters tracked: " + batterStats.size());
         System.out.println("Total bowlers tracked: " + bowlerStats.size());
 
         
-        System.out.println("🧠 Computing baselines...");
+        System.out.println("Computing baselines...");
         BaselineCalculator baselineCalculator = new BaselineCalculator();
         baselineCalculator.compute(batterStats, bowlerStats);
-        System.out.println("✅ Baselines ready for simulation");
+        System.out.println("Baselines ready for simulation");
 
         
         exportSimSheet(batterStats, bowlerStats, baselineCalculator);
 
-        System.out.println("🏁 Pipeline completed successfully");
+        System.out.println("Pipeline completed successfully");
     }
 
     
@@ -135,7 +135,7 @@ public class Main {
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Error processing match: " + file.getName());
+            System.err.println("Error processing match: " + file.getName());
             e.printStackTrace();
         }
     }
@@ -180,9 +180,6 @@ public class Main {
             List<Object> row = new ArrayList<>();
             row.add(player);
 
-            // -------------------------
-            // BATTING SECTION (NERFED)
-            // -------------------------
             Map<String, Stats> batMap = batterStats.getOrDefault(player, new HashMap<>());
 
             for (String role : ROLE_ORDER) {
@@ -196,8 +193,8 @@ public class Main {
 
                 row.add(round(s.getBattingAverage()));
                 row.add(round(s.getBattingStrikeRate()));
-                row.add(round(adjRPB));   // 🔥 Nerfed stat
-                row.add(round(adjWPB));   // 🔥 Nerfed stat
+                row.add(round(adjRPB));   // Nerfed stat
+                row.add(round(adjWPB));   // Nerfed stat
                 row.add(s.getBalls());    // sample size visibility
             }
 
@@ -223,11 +220,11 @@ public class Main {
         }
 
         csv.close();
-        System.out.println("✅ sim_stats_nerfed.csv generated (with 500-ball confidence nerf)");
+        System.out.println("sim_stats_nerfed.csv generated (with 1000-ball confidence nerf)");
     }
 
     private static double round(double value) {
-        return Math.round(value * 1000.0) / 1000.0; // more precision for modeling
+        return Math.round(value * 1000.0) / 1000.0;
     }
 
 }

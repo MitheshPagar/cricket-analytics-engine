@@ -8,7 +8,9 @@ import com.opencsv.CSVReader;
 
 public class PlayerRoleLoader {
     
+    @SuppressWarnings("FieldMayBeFinal")
     private Map<String, String> batRoleMap = new HashMap<>();
+    @SuppressWarnings("FieldMayBeFinal")
     private Map<String, String> bowlRoleMap = new HashMap<>();
 
     public void load(String filePath) throws Exception {
@@ -24,7 +26,7 @@ public class PlayerRoleLoader {
 
             String player = line[1].trim();
             String batRole = line[2].trim();
-            String bowlRole = line[3].trim();   // ✅ third column
+            String bowlRole = line[3].trim();   // third column
 
             batRoleMap.put(player, batRole);
             bowlRoleMap.put(player, bowlRole);

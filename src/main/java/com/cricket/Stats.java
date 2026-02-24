@@ -6,7 +6,7 @@ public class Stats {
     private int runs;
     private int dismissals;
 
-    private static final int CONFIDENCE = 500;
+    private static final int CONFIDENCE = 1000;
 
     public void recordBall(int runsInBall, boolean isDismissal) {
         balls++;
@@ -71,24 +71,10 @@ public class Stats {
     }
 
     public double getSampleWeight() {
-        /*
-         Weight formula:
-         weight = balls / (balls + 500)
-
-         Meaning:
-         - 10 balls  -> ~0.02 (heavily nerfed)
-         - 100 balls -> ~0.17
-         - 500 balls -> 0.50 (balanced)
-         - 2000 balls -> ~0.80 (true skill dominates)
-        */
         return (double) balls / (balls + CONFIDENCE);
     }
 
 
-    /**
-     * Adjusted Runs Per Ball using role-specific baseline.
-     * Prevents small sample batters from becoming overpowered.
-     */
     public double getAdjustedRunsPerBall(double baselineRunsPerBall) {
 
         if (balls == 0) {
@@ -102,10 +88,6 @@ public class Stats {
                (baselineRunsPerBall * (1.0 - weight));
     }
 
-    /**
-     * Adjusted Wickets Per Ball using baseline.
-     * Prevents fake elite bowlers from tiny samples.
-     */
     public double getAdjustedWicketsPerBall(double baselineWicketsPerBall) {
 
         if (balls == 0) {

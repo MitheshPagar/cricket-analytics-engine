@@ -12,12 +12,12 @@ public class CsvWriterUtil {
         writer = new CSVWriter(new FileWriter(fileName));
     }
 
-    // 🔥 Generic header (any number of columns)
+    // Generic header (any number of columns)
     public void writeHeader(String[] header) {
         writer.writeNext(header);
     }
 
-    // 🔥 Generic row (any number of columns)
+    // Generic row (any number of columns)
     public void writeRow(Object... values) {
 
         String[] row = new String[values.length];
