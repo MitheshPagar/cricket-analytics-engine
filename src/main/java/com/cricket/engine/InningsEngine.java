@@ -20,7 +20,7 @@ public class InningsEngine {
     public InningsResult simulateInnings(
             List<String> battingOrder,
             List<String> bowlingOrder,
-            int maxOvers,
+            int maxBalls,
             Integer target
     ) {
 
@@ -33,9 +33,9 @@ public class InningsEngine {
         int nextBatterIndex = 2;
 
         int bowlerIndex = 0;
-        int oversByCurrentBowler = 0;
+        int spellBalls = 0;
 
-        while (wickets < 10 && balls < maxOvers * 6) {
+        while (wickets < 10 && balls < maxBalls) {
 
             String striker = battingOrder.get(strikerIndex);
             String bowler = bowlingOrder.get(bowlerIndex);
@@ -57,6 +57,7 @@ public class InningsEngine {
             );
 
             balls++;
+            spellBalls++;
 
             if (outcome.isWicket()) {
 
@@ -100,7 +101,6 @@ public class InningsEngine {
             // End of over logic
             if (balls % 6 == 0) {
 
-                oversByCurrentBowler++;
 
                 // Swap strike at end of over
                 int temp = strikerIndex;
@@ -108,10 +108,10 @@ public class InningsEngine {
                 nonStrikerIndex = temp;
 
                 // 5-over spell rotation
-                if (oversByCurrentBowler >= 5) {
+                if (spellBalls >= 30) {
                     bowlerIndex =
                             (bowlerIndex + 1) % bowlingOrder.size();
-                    oversByCurrentBowler = 0;
+                    spellBalls = 0;
                 }
             }
         }

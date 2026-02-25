@@ -16,11 +16,11 @@ public class TestMatchSimulationMain {
         StatsBundle bundle = Main.buildStats();
 
         PitchProfile basePitch = new PitchProfile(
-                1.0,  // green
-                1.0,  // dry
-                1.0,  // bounce
-                1.0,  // flat
-                1.0   // boundary
+                1.25,  // green
+                1.25,  // dry
+                1.25,  // bounce
+                1.7,  // flat
+                1.25   // boundary
         );
 
         BallEngine ballEngine = new BallEngine(
