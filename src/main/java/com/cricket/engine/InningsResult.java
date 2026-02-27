@@ -1,32 +1,29 @@
 package com.cricket.engine;
 
 public class InningsResult {
-    @SuppressWarnings("FieldMayBeFinal")
-    private int runs;
-    @SuppressWarnings("FieldMayBeFinal")
-    private int wickets;
-    @SuppressWarnings("FieldMayBeFinal")
-    private int balls;
+
+    private final int runs;
+    private final int wickets;
+    private final int balls;
+    private final boolean declared;
 
     public InningsResult(int runs, int wickets, int balls) {
+        this(runs, wickets, balls, false);
+    }
+
+    public InningsResult(int runs, int wickets, int balls, boolean declared) {
         this.runs = runs;
         this.wickets = wickets;
         this.balls = balls;
+        this.declared = declared;
     }
 
-    public int getRuns() {
-        return runs;
-    }
+    public int getRuns() { return runs; }
+    public int getWickets() { return wickets; }
+    public int getBalls() { return balls; }
+    public boolean isDeclared() { return declared; }
 
-    public int getWickets() {
-        return wickets;
-    }
-
-    public int getBalls() {
-        return balls;
-    }
-
-    public String getOvers(){
+    public String getOvers() {
         int fullOvers = balls / 6;
         int remainingBalls = balls % 6;
         return fullOvers + "." + remainingBalls;
@@ -38,6 +35,9 @@ public class InningsResult {
 
     @Override
     public String toString() {
-        return runs + "/" + wickets + " in " + getOvers() + " overs (RR: " + String.format("%.2f", getRunRate()) + ")";
+        String suffix = declared ? " dec" : "";
+        return runs + "/" + wickets + suffix
+                + " in " + getOvers()
+                + " overs (RR: " + String.format("%.2f", getRunRate()) + ")";
     }
 }
