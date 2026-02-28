@@ -1,17 +1,26 @@
 package com.cricket.engine;
 
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.input.MouseButton;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.input.MouseButton;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 public class BowlingAllocationScreen {
 
@@ -21,8 +30,9 @@ public class BowlingAllocationScreen {
     private static final int CELL_H        = 42;
 
     private final String screenTitle;
-    private final List<String> bowlingXI;
+    private final List<String> bowlingAtXI;  // XI being bowled at (for display)
     private final MatchConfig config;
+    private List<BowlerInfo> bowlerInfoList;  // bowling team XI with roles
     private final Consumer<BowlingPlan> onNext;
     private final Runnable onBack;
 
@@ -41,26 +51,33 @@ public class BowlingAllocationScreen {
     private List<BowlerInfo> bowlers;
 
     public BowlingAllocationScreen(String screenTitle,
-                                   List<String> bowlingXI,
+                                   List<String> bowlingAtXI,
                                    MatchConfig config,
                                    Consumer<BowlingPlan> onNext,
                                    Runnable onBack) {
         this.screenTitle = screenTitle;
-        this.bowlingXI   = bowlingXI;
+        this.bowlingAtXI = bowlingAtXI;
         this.config      = config;
         this.onNext      = onNext;
         this.onBack      = onBack;
     }
 
+    /** Called by BowlingAllocatorApp to inject bowler roles from the database. */
+    public void setBowlerInfoList(List<BowlerInfo> bowlerInfoList) {
+        this.bowlerInfoList = bowlerInfoList;
+    }
+
     public void show(Stage stage) {
         this.stage = stage;
 
-        // Build bowler list from XI using roles from config
-        bowlers = bowlingXI.stream()
-                .map(name -> new BowlerInfo(name,
-                        config != null && config.teamABowlingPlan != null
-                        ? "" : ""))  // roles loaded dynamically if roleLoader available
-                .toList();
+        // Use pre-built BowlerInfo list (with roles) if provided by BowlingAllocatorApp
+        if (bowlerInfoList != null) {
+            bowlers = bowlerInfoList;
+        } else {
+            bowlers = bowlingAtXI.stream()
+                    .map(name -> new BowlerInfo(name, ""))
+                    .toList();
+        }
 
         // Sync pitch recommender with config pitch
         if (config.pitchProfile != null) {

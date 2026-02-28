@@ -1,5 +1,6 @@
 package com.cricket.engine;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -8,24 +9,16 @@ import java.util.List;
  */
 public class MatchConfig {
 
-    // Teams
-    public final String teamAName;
-    public final List<String> teamAXI;
-    public final String teamBName;
-    public final List<String> teamBXI;
+    // Teams — populated by TeamBuilderScreen / TeamSetupScreen
+    public String teamAName = "";
+    public List<String> teamAXI = new ArrayList<>();
+    public String teamBName = "";
+    public List<String> teamBXI = new ArrayList<>();
 
     // Bowling plans (over-by-over, built in GUI)
-    public BowlingPlan teamABowlingPlan;  // Team A bowls at Team B
-    public BowlingPlan teamBBowlingPlan;  // Team B bowls at Team A
+    public BowlingPlan teamABowlingPlan = null;  // Team A bowls at Team B
+    public BowlingPlan teamBBowlingPlan = null;  // Team B bowls at Team A
 
     // Pitch
-    public PitchProfile pitchProfile;
-
-    public MatchConfig(String teamAName, List<String> teamAXI,
-                       String teamBName, List<String> teamBXI) {
-        this.teamAName = teamAName;
-        this.teamAXI   = teamAXI;
-        this.teamBName = teamBName;
-        this.teamBXI   = teamBXI;
-    }
+    public PitchProfile pitchProfile = null;
 }
