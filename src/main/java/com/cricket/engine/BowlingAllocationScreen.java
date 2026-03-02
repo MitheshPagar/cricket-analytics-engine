@@ -30,9 +30,9 @@ public class BowlingAllocationScreen {
     private static final int CELL_H        = 42;
 
     private final String screenTitle;
-    private final List<String> bowlingAtXI;  // XI being bowled at (for display)
+    private final List<String> bowlingAtXI;
     private final MatchConfig config;
-    private List<BowlerInfo> bowlerInfoList;  // bowling team XI with roles
+    private List<BowlerInfo> bowlerInfoList;
     private final Consumer<BowlingPlan> onNext;
     private final Runnable onBack;
 
@@ -43,7 +43,7 @@ public class BowlingAllocationScreen {
     private boolean blockSelectMode   = false;
     private int blockSelectStart      = -1;
 
-    private final Button[] overCells     = new Button[TOTAL_OVERS];
+    private final Button[] overCells          = new Button[TOTAL_OVERS];
     private final Map<String, Label> summaryLabels = new HashMap<>();
     private Label statusLabel;
     private Stage stage;
@@ -70,7 +70,6 @@ public class BowlingAllocationScreen {
     public void show(Stage stage) {
         this.stage = stage;
 
-        // Use pre-built BowlerInfo list (with roles) if provided by BowlingAllocatorApp
         if (bowlerInfoList != null) {
             bowlers = bowlerInfoList;
         } else {
@@ -79,7 +78,6 @@ public class BowlingAllocationScreen {
                     .toList();
         }
 
-        // Sync pitch recommender with config pitch
         if (config.pitchProfile != null) {
             recommender.update(
                     config.pitchProfile.getGreen(),
@@ -99,7 +97,11 @@ public class BowlingAllocationScreen {
         root.setRight(buildRightPanel());
         root.setBottom(buildFooter());
 
-        stage.setScene(new Scene(root, 1280, 820));
+        // ── Load CSS stylesheet ───────────────────────────────────────────
+        Scene scene = new Scene(root, 1280, 820);
+        var css = getClass().getResource("/bowling-allocator.css");
+        if (css != null) scene.getStylesheets().add(css.toExternalForm());
+        stage.setScene(scene);
         stage.show();
 
         refreshGrid();
@@ -178,7 +180,6 @@ public class BowlingAllocationScreen {
         panel.setStyle("-fx-background-color: #0f1923;");
         panel.setPadding(new Insets(16));
 
-        // Controls row
         HBox controls = new HBox(12);
         controls.setAlignment(Pos.CENTER_LEFT);
 
@@ -203,12 +204,10 @@ public class BowlingAllocationScreen {
 
         controls.getChildren().addAll(blockToggle, hint);
 
-        // Grid
         GridPane grid = new GridPane();
         grid.setHgap(4);
         grid.setVgap(4);
 
-        // Column headers
         for (int col = 0; col < OVERS_PER_ROW; col++) {
             Label h = new Label(String.valueOf(col + 1));
             h.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-text-fill: #6a8099;");
@@ -250,7 +249,8 @@ public class BowlingAllocationScreen {
     private Button buildCell(int overNum) {
         Button cell = new Button(String.valueOf(overNum));
         cell.setPrefSize(CELL_W, CELL_H);
-        cell.setStyle(unassignedStyle());
+        cell.getStyleClass().add("over-cell");
+        cell.getStyleClass().add("cell-unassigned");
 
         cell.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.SECONDARY) {
@@ -390,34 +390,51 @@ public class BowlingAllocationScreen {
         return footer;
     }
 
-    // ── Refresh ───────────────────────────────────────────────────────────
+    // ── Refresh grid ──────────────────────────────────────────────────────
     private void refreshGrid() {
         for (int i = 0; i < TOTAL_OVERS; i++) {
             int overNum = i + 1;
             Button cell = overCells[i];
             if (cell == null) continue;
 
+            // Clear all dynamic style classes
+            cell.getStyleClass().removeAll(
+                "cell-unassigned", "cell-recommended", "cell-assigned",
+                "cell-fast", "cell-medium-fast", "cell-medium",
+                "cell-spin", "cell-part-time", "cell-violation"
+            );
+
             String assigned = plan.getAssignment(overNum);
 
             if (assigned != null) {
                 BowlerInfo b = getBowler(assigned);
-                String color = b != null ? accentFor(b.getCategory()) : "#6a8099";
-                String bg    = b != null ? bgFor(b.getCategory()) : "#1e2d3e";
                 cell.setText(b != null ? b.getShortName() : assigned);
-                cell.setStyle("-fx-background-color: " + bg + "; "
-                        + "-fx-border-color: " + color + "; -fx-border-width: 1; "
-                        + "-fx-text-fill: " + color + "; -fx-font-weight: bold; "
-                        + "-fx-font-family: 'Courier New'; -fx-font-size: 10px; "
-                        + (plan.isBackToBack(overNum + 1, assigned)
-                            ? "-fx-border-color: #ff0000; -fx-border-width: 2;" : ""));
+                cell.getStyleClass().add("cell-assigned");
+                cell.getStyleClass().add(cellClassFor(b));
+
+                // Flag back-to-back violation on the current over
+                if (plan.isBackToBack(overNum, assigned)) {
+                    cell.getStyleClass().add("cell-violation");
+                }
             } else {
                 cell.setText(String.valueOf(overNum));
                 boolean recommended = selectedBowler != null
                         && recommender.getRecommendedCategories(overNum)
                                       .contains(selectedBowler.getCategory());
-                cell.setStyle(recommended ? recommendedStyle() : unassignedStyle());
+                cell.getStyleClass().add(recommended ? "cell-recommended" : "cell-unassigned");
             }
         }
+    }
+
+    private String cellClassFor(BowlerInfo b) {
+        if (b == null) return "cell-part-time";
+        return switch (b.getCategory()) {
+            case FAST        -> "cell-fast";
+            case MEDIUM_FAST -> "cell-medium-fast";
+            case MEDIUM      -> "cell-medium";
+            case SPIN        -> "cell-spin";
+            case PART_TIME   -> "cell-part-time";
+        };
     }
 
     private void refreshSummary() {
@@ -458,18 +475,6 @@ public class BowlingAllocationScreen {
     }
 
     // ── Style helpers ─────────────────────────────────────────────────────
-    private String unassignedStyle() {
-        return "-fx-background-color: #1e2d3e; -fx-border-color: #2a3f55; "
-                + "-fx-border-width: 1; -fx-text-fill: #3a5570; "
-                + "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-cursor: hand;";
-    }
-
-    private String recommendedStyle() {
-        return "-fx-background-color: #1e2d3e; -fx-border-color: #d4a030; "
-                + "-fx-border-width: 1.5; -fx-text-fill: #d4a030; "
-                + "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-cursor: hand;";
-    }
-
     private String accentFor(BowlerInfo.Category cat) {
         return switch (cat) {
             case FAST        -> "#c0392b";
@@ -480,6 +485,7 @@ public class BowlingAllocationScreen {
         };
     }
 
+    @SuppressWarnings("unused")
     private String bgFor(BowlerInfo.Category cat) {
         return switch (cat) {
             case FAST        -> "#3d1515";

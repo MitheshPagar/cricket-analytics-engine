@@ -23,7 +23,7 @@ public class TeamDatabase {
             String[] line;
             while ((line = reader.readNext()) != null) {
                 if (line.length < 4) continue;
-                String name     = line[1].trim();
+                String name     = line[0].trim();
                 String batRole  = line[2].trim();
                 String bowlRole = line[3].trim();
                 if (!name.isBlank()) {

@@ -24,7 +24,7 @@ public class PlayerRoleLoader {
 
             if (line.length < 4) continue;
 
-            String player = line[1].trim();
+            String player = line[0].trim();
             String batRole = line[2].trim();
             String bowlRole = line[3].trim();   // third column
 

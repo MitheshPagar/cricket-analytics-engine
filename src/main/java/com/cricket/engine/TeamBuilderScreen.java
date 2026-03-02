@@ -295,11 +295,8 @@ public class TeamBuilderScreen {
         List<PlayerRecord> results = db.search(q);
         playerListView.getItems().clear();
         for (PlayerRecord p : results) {
-            // Mark already-selected players
-            String display = selectedPlayers.contains(p.getName())
-                    ? "✓ " + p.getName() + " | " + p.getRoleSummary()
-                    :       p.getName() + " | " + p.getRoleSummary();
-            playerListView.getItems().add(display);
+            // Store only the canonical name — display is handled by PlayerCell
+            playerListView.getItems().add(p.getName());
         }
     }
 
@@ -383,16 +380,19 @@ public class TeamBuilderScreen {
     // ── Custom list cell ──────────────────────────────────────────────────
     private class PlayerCell extends ListCell<String> {
         @Override
-        protected void updateItem(String item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty || item == null) {
+        protected void updateItem(String name, boolean empty) {
+            super.updateItem(name, empty);
+            if (empty || name == null) {
                 setText(null);
                 setStyle("-fx-background-color: transparent;");
                 return;
             }
 
-            boolean isSelected = item.startsWith("✓ ");
-            setText(item);
+            PlayerRecord rec = db.findByName(name);
+            String roleSummary = (rec != null) ? rec.getRoleSummary() : "? / ?";
+            boolean isSelected = selectedPlayers.contains(name);
+            String prefix = isSelected ? "✓ " : "  ";
+            setText(prefix + name + " | " + roleSummary);
 
             if (isSelected) {
                 setStyle("-fx-background-color: #0d2d1a; -fx-text-fill: #27ae60; "

@@ -74,17 +74,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Run the sim engine -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.6.3</version>
-                <configuration>
-                    <mainClass>com.cricket.Main</mainClass>
-                </configuration>
-            </plugin>
-
-            <!-- Run the JavaFX GUI -->
+            <!-- Run the JavaFX GUI (dev only) -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
@@ -97,6 +87,97 @@
                         <option>--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</option>
                     </options>
                 </configuration>
+            </plugin>
+
+            <!-- Step 1: Fat JAR — bundle all deps into one JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.2</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals><goal>shade</goal></goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <outputFile>${project.build.directory}/CricketSim-fat.jar</outputFile>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.cricket.engine.BowlingAllocatorApp</mainClass>
+                                    <manifestEntries>
+                                        <!-- Required for JavaFX in fat JAR -->
+                                        <Add-Opens>javafx.base/com.sun.javafx.event java.base/java.lang java.base/java.lang.reflect</Add-Opens>
+                                    </manifestEntries>
+                                </transformer>
+                                <!-- Merge service files (needed by Jackson, OpenCSV) -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <!-- Prevent duplicate licence files causing errors -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer">
+                                    <addHeader>false</addHeader>
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <!-- Strip signature files — fat JARs can't be signed -->
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                        <exclude>module-info.class</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Step 2: launch4j — wrap fat JAR into .exe -->
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <version>2.5.1</version>
+                <executions>
+                    <execution>
+                        <id>wrap-exe</id>
+                        <phase>package</phase>
+                        <goals><goal>launch4j</goal></goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>${project.build.directory}/CricketSim.exe</outfile>
+                            <jar>${project.build.directory}/CricketSim-fat.jar</jar>
+                            <errTitle>Cricket Sim</errTitle>
+                            <classPath>
+                                <mainClass>com.cricket.engine.BowlingAllocatorApp</mainClass>
+                            </classPath>
+                            <jre>
+                                <!-- Minimum Java version required -->
+                                <minVersion>17</minVersion>
+                                <!-- JVM args for JavaFX module access -->
+                                <opts>
+                                    <opt>--add-opens=javafx.base/com.sun.javafx.event=ALL-UNNAMED</opt>
+                                    <opt>--add-opens=java.base/java.lang=ALL-UNNAMED</opt>
+                                    <opt>--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</opt>
+                                    <opt>--add-modules=javafx.controls,javafx.fxml,javafx.graphics,javafx.base</opt>
+                                </opts>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>1.0.0</txtFileVersion>
+                                <fileDescription>Cricket Test Match Simulator</fileDescription>
+                                <copyright>2025</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>1.0.0</txtProductVersion>
+                                <productName>Cricket Sim</productName>
+                                <internalName>CricketSim</internalName>
+                                <originalFilename>CricketSim.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
