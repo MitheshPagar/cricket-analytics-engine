@@ -1,15 +1,24 @@
 package com.cricket.engine;
 
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
+
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.Separator;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 /**
  * Player picker screen. Shows a searchable player list on the left,
@@ -36,6 +45,7 @@ public class TeamBuilderScreen {
     private Label statusLabel;
     private Label countLabel;
     private TextField teamNameField;
+    @SuppressWarnings("unused")
     private Stage stage;
 
     public TeamBuilderScreen(String teamSlot,
@@ -180,7 +190,7 @@ public class TeamBuilderScreen {
     }
 
     // ── Footer ────────────────────────────────────────────────────────────
-    private HBox buildFooter(Stage stage) {
+    private HBox buildFooter(@SuppressWarnings("unused") Stage stage) {
         HBox footer = new HBox(12);
         footer.setStyle("-fx-background-color: #0a1218; -fx-border-color: #2a3f55; -fx-border-width: 1 0 0 0;");
         footer.setPadding(new Insets(14, 24, 14, 24));
