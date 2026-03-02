@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.cricket.BaselineCalculator;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -38,6 +40,7 @@ public class BowlingAllocationScreen {
 
     private final BowlingPlan plan             = new BowlingPlan();
     private final PitchRecommender recommender = new PitchRecommender(1,1,1,1,1);
+    private BowlingRecommender bowlingRecommender = null;
 
     private BowlerInfo selectedBowler = null;
     private boolean blockSelectMode   = false;
@@ -65,6 +68,13 @@ public class BowlingAllocationScreen {
     /** Called by BowlingAllocatorApp to inject bowler roles from the database. */
     public void setBowlerInfoList(List<BowlerInfo> bowlerInfoList) {
         this.bowlerInfoList = bowlerInfoList;
+    }
+
+    /** Called by BowlingAllocatorApp to inject stats for quality-aware auto-fill. */
+    public void setStatsBundle(
+            Map<String, Map<String, com.cricket.Stats>> bowlerStats,
+            BaselineCalculator baselineCalculator) {
+        this.bowlingRecommender = new BowlingRecommender(bowlerStats, baselineCalculator);
     }
 
     public void show(Stage stage) {
@@ -202,7 +212,24 @@ public class BowlingAllocationScreen {
         Label hint = new Label("Click = assign  •  Right-click = clear  •  Gold border = pitch recommended");
         hint.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-text-fill: #6a8099; -fx-font-style: italic;");
 
-        controls.getChildren().addAll(blockToggle, hint);
+        Button autoFillBtn = new Button("⚡ Auto-Fill");
+        autoFillBtn.setStyle("-fx-background-color: #1a3050; -fx-text-fill: #d4a030; "
+                + "-fx-border-color: #d4a030; -fx-border-width: 1; -fx-cursor: hand; "
+                + "-fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-padding: 5 12 5 12;");
+        autoFillBtn.setOnAction(e -> autoFill());
+
+        Button clearAllBtn = new Button("✕ Clear All");
+        clearAllBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #c0392b; "
+                + "-fx-border-color: #c0392b; -fx-border-width: 1; -fx-cursor: hand; "
+                + "-fx-font-family: 'Courier New'; -fx-padding: 5 12 5 12;");
+        clearAllBtn.setOnAction(e -> {
+            for (int i = 1; i <= 90; i++) plan.clear(i);
+            refreshGrid();
+            refreshSummary();
+            setStatus("Plan cleared.");
+        });
+
+        controls.getChildren().addAll(blockToggle, autoFillBtn, clearAllBtn, hint);
 
         GridPane grid = new GridPane();
         grid.setHgap(4);
@@ -390,6 +417,28 @@ public class BowlingAllocationScreen {
         return footer;
     }
 
+    // ── Auto-fill ─────────────────────────────────────────────────────────
+    private void autoFill() {
+        if (bowlers == null || bowlers.isEmpty()) {
+            setStatus("No bowlers available.");
+            return;
+        }
+        if (bowlingRecommender == null) {
+            setStatus("Stats not loaded — cannot auto-fill.");
+            return;
+        }
+        BowlingPlan generated = bowlingRecommender.generate(bowlers);
+        // Copy generated assignments into live plan
+        for (int i = 1; i <= 90; i++) {
+            String assigned = generated.getAssignment(i);
+            if (assigned != null) plan.assign(i, assigned);
+            else plan.clear(i);
+        }
+        refreshGrid();
+        refreshSummary();
+        setStatus("⚡ Auto-fill complete — 90 overs allocated with rotation.");
+    }
+
     // ── Refresh grid ──────────────────────────────────────────────────────
     private void refreshGrid() {
         for (int i = 0; i < TOTAL_OVERS; i++) {
@@ -485,7 +534,6 @@ public class BowlingAllocationScreen {
         };
     }
 
-    @SuppressWarnings("unused")
     private String bgFor(BowlerInfo.Category cat) {
         return switch (cat) {
             case FAST        -> "#3d1515";

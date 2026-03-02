@@ -11,6 +11,7 @@ public class BowlingAllocatorApp extends Application {
     private MatchConfig config;
     private TeamDatabase db;
     private SavedTeamsStore store;
+    private com.cricket.StatsBundle statsBundle;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -24,6 +25,16 @@ public class BowlingAllocatorApp extends Application {
 
         primaryStage.setTitle("Test Match Planner");
         primaryStage.setResizable(true);
+
+        // Load stats in background so UI stays responsive
+        new Thread(() -> {
+            try {
+                statsBundle = com.cricket.Main.buildStats();
+                System.out.println("Stats bundle loaded for auto-fill recommender.");
+            } catch (Exception e) {
+                System.err.println("Could not load stats bundle: " + e.getMessage());
+            }
+        }).start();
 
         showPitchSetup();
     }
@@ -91,6 +102,9 @@ public class BowlingAllocatorApp extends Application {
                 }
         );
         allocScreen.setBowlerInfoList(bowlerInfos);
+        if (statsBundle != null) {
+            allocScreen.setStatsBundle(statsBundle.bowlerStats, statsBundle.baselineCalculator);
+        }
         allocScreen.show(primaryStage);
     }
 
