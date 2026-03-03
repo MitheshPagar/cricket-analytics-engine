@@ -37,7 +37,8 @@ public class MatchLauncher {
                     new InningsEngine(ballEngine, bundle.roleLoader);
 
             TestMatchEngine matchEngine =
-                    new TestMatchEngine(inningsEngine, config.pitchProfile);
+                    new TestMatchEngine(inningsEngine, config.pitchProfile,
+                                        config.primaryStage);
 
             // Run match — bowling plans are passed so InningsEngine
             // uses the GUI-allocated over sequence

@@ -11,15 +11,27 @@ public class TestMatchEngine {
     private int matchBalls = 0;
     private static final int MAX_MATCH_BALLS = 450 * 6;
 
+    private final java.util.List<InningsResult> allInnings = new java.util.ArrayList<>();
+    private String teamAName;
+    private String teamBName;
+    private final javafx.stage.Stage primaryStage;
+
     // Bowling plans set before match runs (optional — null = use full XI)
     private BowlingPlan teamABowlingPlan = null;
     private BowlingPlan teamBBowlingPlan = null;
 
     public TestMatchEngine(InningsEngine inningsEngine,
                            PitchProfile basePitch) {
+        this(inningsEngine, basePitch, null);
+    }
+
+    public TestMatchEngine(InningsEngine inningsEngine,
+                           PitchProfile basePitch,
+                           javafx.stage.Stage primaryStage) {
         this.inningsEngine = inningsEngine;
         this.declarationEngine = new DeclarationEngine();
         this.pitch = new DeterioratingPitch(basePitch);
+        this.primaryStage = primaryStage;
     }
 
     // ── Called from GUI via MatchLauncher ────────────────────────────────────
@@ -35,12 +47,15 @@ public class TestMatchEngine {
     // ── Core match flow ──────────────────────────────────────────────────────
     public void simulateMatch(String teamAName, List<String> teamA,
                               String teamBName, List<String> teamB) {
+        this.teamAName = teamAName;
+        this.teamBName = teamBName;
         int a1, b1, a2 = 0, b2 = 0;
 
         // 1st Innings: Team A bat, Team B bowl
         System.out.println("\n--- 1st Innings: " + teamAName + " ---");
         InningsResult aFirst = playInnings(teamA, teamB, null, 1, 0, teamBBowlingPlan);
         a1 = aFirst.getRuns();
+        allInnings.add(aFirst);
         System.out.println(aFirst);
         if (aFirst.isDeclared()) System.out.println(teamAName + " have declared!");
 
@@ -50,6 +65,7 @@ public class TestMatchEngine {
         System.out.println("\n--- 2nd Innings: " + teamBName + " ---");
         InningsResult bFirst = playInnings(teamB, teamA, null, 2, -a1, teamABowlingPlan);
         b1 = bFirst.getRuns();
+        allInnings.add(bFirst);
         System.out.println(bFirst);
         if (bFirst.isDeclared()) System.out.println(teamBName + " have declared!");
 
@@ -68,6 +84,7 @@ public class TestMatchEngine {
             InningsResult bSecond = playInnings(teamB, teamA, null, 3,
                     b1 - a1, teamABowlingPlan);
             b2 = bSecond.getRuns();
+            allInnings.add(bSecond);
             System.out.println(bSecond);
             if (bSecond.isDeclared()) System.out.println(teamBName + " have declared!");
 
@@ -87,8 +104,10 @@ public class TestMatchEngine {
 
             int target = (a1 - b1 - b2) + 1;
             if (target <= 0) {
-                System.out.println("\n" + teamAName + " wins by an innings and "
-                        + Math.abs(target - 1) + " runs!");
+                String inningsResult = teamAName + " wins by an innings and "
+                        + Math.abs(target - 1) + " runs!";
+                System.out.println("\n" + inningsResult);
+                showScorecard(inningsResult);
                 return;
             }
 
@@ -106,6 +125,7 @@ public class TestMatchEngine {
             InningsResult aSecond = playInnings(teamA, teamB, null, 3,
                     a1 - b1, teamBBowlingPlan);
             a2 = aSecond.getRuns();
+            allInnings.add(aSecond);
             System.out.println(aSecond);
             if (aSecond.isDeclared()) System.out.println(teamAName + " have declared!");
 
@@ -158,24 +178,34 @@ public class TestMatchEngine {
     private boolean timeExpired() {
         if (matchBalls >= MAX_MATCH_BALLS) {
             System.out.println("\nMatch Drawn (time expired)");
+            showScorecard("Match Drawn (time expired)");
             return true;
         }
         return false;
     }
 
+    private void showScorecard(String resultLine) {
+        new ScorecardScreen(teamAName, teamBName,
+                new java.util.ArrayList<>(allInnings), resultLine, primaryStage).show();
+    }
+
     private void printChaseResult(InningsResult result, int target,
                                   String chasingTeam, String defendingTeam) {
+        allInnings.add(result);
         System.out.println("\n============================");
         int runs    = result.getRuns();
         int wickets = result.getWickets();
 
+        String resultLine;
         if (runs >= target) {
-            System.out.println(chasingTeam + " wins by " + (10 - wickets) + " wickets");
+            resultLine = chasingTeam + " wins by " + (10 - wickets) + " wickets";
         } else if (matchBalls >= MAX_MATCH_BALLS) {
-            System.out.println("Match Drawn");
+            resultLine = "Match Drawn";
         } else {
-            System.out.println(defendingTeam + " wins by " + (target - runs - 1) + " runs");
+            resultLine = defendingTeam + " wins by " + (target - runs - 1) + " runs";
         }
+        System.out.println(resultLine);
         System.out.println("============================");
+        new ScorecardScreen(teamAName, teamBName, allInnings, resultLine, primaryStage).show();
     }
 }

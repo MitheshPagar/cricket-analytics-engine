@@ -21,4 +21,7 @@ public class MatchConfig {
 
     // Pitch
     public PitchProfile pitchProfile = null;
+
+    // Primary stage (for showing scorecard in same window)
+    public javafx.stage.Stage primaryStage = null;
 }
