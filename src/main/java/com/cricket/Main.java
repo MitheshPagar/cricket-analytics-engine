@@ -2,7 +2,6 @@ package com.cricket;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +29,7 @@ public class Main {
 
         
         PlayerRoleLoader roleLoader = new PlayerRoleLoader();
-        roleLoader.load("playerRoles.csv");
+        roleLoader.load(com.cricket.engine.PathResolver.resolve("playerRoles.csv"));
         System.out.println("Player roles loaded");
 
         ObjectMapper mapper = new ObjectMapper();
@@ -40,7 +39,7 @@ public class Main {
         Map<String, Map<String, Stats>> bowlerStats = new HashMap<>();
 
         
-        Files.list(Path.of("matches"))
+        Files.list(com.cricket.engine.PathResolver.resolvePath("matches"))
                 .filter(p -> p.toString().endsWith(".json"))
                 .forEach(path -> processMatch(
                         path.toFile(),
@@ -230,7 +229,7 @@ public class Main {
     public static StatsBundle buildStats() throws Exception {
 
         PlayerRoleLoader roleLoader = new PlayerRoleLoader();
-        roleLoader.load("playerRoles.csv");
+        roleLoader.load(com.cricket.engine.PathResolver.resolve("playerRoles.csv"));
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -238,7 +237,7 @@ public class Main {
         Map<String, Map<String, Stats>> bowlerStats = new HashMap<>();
 
         // Aggregate stats from JSON
-        Files.list(Path.of("matches"))
+        Files.list(com.cricket.engine.PathResolver.resolvePath("matches"))
                 .filter(p -> p.toString().endsWith(".json"))
                 .forEach(path -> processMatch(
                         path.toFile(),

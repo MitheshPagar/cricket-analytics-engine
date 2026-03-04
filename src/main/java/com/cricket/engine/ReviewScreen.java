@@ -269,7 +269,7 @@ public class ReviewScreen {
 
             // Export to Excel
             try {
-                String path = System.getProperty("user.home") + "/allStats.xlsx";
+                String path = com.cricket.engine.PathResolver.resolve("allStats.xlsx");
                 StatsExporter.export(result, config.teamAName, config.teamBName, finalSimCount, path);
                 System.out.println("Stats exported to: " + path);
             } catch (Exception ex) {

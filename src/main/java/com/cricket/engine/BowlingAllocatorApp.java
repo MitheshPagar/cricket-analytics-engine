@@ -5,7 +5,7 @@ import javafx.stage.Stage;
 
 public class BowlingAllocatorApp extends Application {
 
-    private static final String PLAYER_ROLES_CSV = "playerRoles.csv";
+    private static final String PLAYER_ROLES_CSV = PathResolver.resolve("playerRoles.csv");
 
     private Stage primaryStage;
     private MatchConfig config;

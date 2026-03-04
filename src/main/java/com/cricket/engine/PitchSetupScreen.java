@@ -112,7 +112,7 @@ public class PitchSetupScreen {
         footer.setPadding(new Insets(14, 24, 14, 24));
         footer.setAlignment(Pos.CENTER_RIGHT);
 
-        Button nextBtn = new Button("Next: India's Bowling Plan →");
+        Button nextBtn = new Button("Next→");
         nextBtn.setStyle("-fx-background-color: #d4a030; -fx-text-fill: #0f1923; "
                 + "-fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; "
                 + "-fx-font-size: 13px; -fx-cursor: hand; -fx-padding: 8 20 8 20;");

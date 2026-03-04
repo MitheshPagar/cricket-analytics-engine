@@ -109,7 +109,7 @@
                             <outputFile>${project.build.directory}/CricketSim-fat.jar</outputFile>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.cricket.engine.BowlingAllocatorApp</mainClass>
+                                    <mainClass>com.cricket.engine.AppLauncher</mainClass>
                                     <manifestEntries>
                                         <!-- Required for JavaFX in fat JAR -->
                                         <Add-Opens>javafx.base/com.sun.javafx.event java.base/java.lang java.base/java.lang.reflect</Add-Opens>
@@ -157,7 +157,7 @@
                             <jar>${project.build.directory}/CricketSim-fat.jar</jar>
                             <errTitle>Cricket Sim</errTitle>
                             <classPath>
-                                <mainClass>com.cricket.engine.BowlingAllocatorApp</mainClass>
+                                <mainClass>com.cricket.engine.AppLauncher</mainClass>
                             </classPath>
                             <jre>
                                 <!-- Minimum Java version required -->
@@ -181,6 +181,41 @@
                                 <internalName>CricketSim</internalName>
                                 <originalFilename>CricketSim.exe</originalFilename>
                             </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <!-- Step 3: Assemble dist/ folder -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>create-dist</id>
+                        <phase>package</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/dist"/>
+                                <copy file="${project.build.directory}/CricketSim.exe"
+                                      todir="${project.build.directory}/dist"/>
+                                <copy file="${project.build.directory}/CricketSim-fat.jar"
+                                      todir="${project.build.directory}/dist"/>
+                                <copy file="${project.basedir}/playerRoles.csv"
+                                      todir="${project.build.directory}/dist"
+                                      failonerror="false"/>
+                                <copy todir="${project.build.directory}/dist/matches"
+                                      failonerror="false">
+                                    <fileset dir="${project.basedir}/matches" includes="**/*"/>
+                                </copy>
+                                <echo file="${project.build.directory}/dist/CricketSim.bat">@echo off
+cd /d "%~dp0"
+start "" javaw -jar CricketSim-fat.jar
+</echo>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
