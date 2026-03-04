@@ -52,11 +52,11 @@ public class ScorecardScreen {
             header.setAlignment(Pos.CENTER_LEFT);
 
             Label title = new Label(teamAName.toUpperCase() + "  vs  " + teamBName.toUpperCase());
-            title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 18px; "
+            title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 18px; "
                     + "-fx-font-weight: bold; -fx-text-fill: #d4a030;");
 
             Label result = new Label(resultLine);
-            result.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 13px; "
+            result.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 13px; "
                     + "-fx-text-fill: #27ae60; -fx-font-weight: bold;");
 
             Region spacer = new Region();
@@ -86,7 +86,9 @@ public class ScorecardScreen {
             root.setTop(header);
             root.setCenter(tabs);
 
-            stage.setScene(new Scene(root, 1200, 750));
+            Scene scene = new Scene(root, 1200, 750);
+        FontLoader.apply(scene);
+        stage.setScene(scene);
             stage.setResizable(true);
             stage.show();
         });
@@ -100,7 +102,7 @@ public class ScorecardScreen {
 
         // Summary line
         Label summary = new Label(ir.toString());
-        summary.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 14px; "
+        summary.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 14px; "
                 + "-fx-text-fill: #d4a030; -fx-font-weight: bold;");
         content.getChildren().add(summary);
 
@@ -205,7 +207,7 @@ public class ScorecardScreen {
               .append(f.overs()).append(")   ");
         }
         Label lbl = new Label(sb.toString().trim());
-        lbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
+        lbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
                 + "-fx-text-fill: #c8d8e8;");
         lbl.setWrapText(true);
         box.getChildren().add(lbl);
@@ -242,7 +244,7 @@ public class ScorecardScreen {
     // ── Helpers ────────────────────────────────────────────────────────────
     private Label sectionLabel(String text) {
         Label l = new Label(text);
-        l.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
+        l.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #6a8099; "
                 + "-fx-border-color: #2a3f55; -fx-border-width: 0 0 1 0; "
                 + "-fx-padding: 8 0 4 0;");
@@ -252,14 +254,14 @@ public class ScorecardScreen {
 
     private Label headerLabel(String text) {
         Label l = new Label(text);
-        l.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
+        l.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #d4a030;");
         return l;
     }
 
     private Label cellLabel(String text, String color) {
         Label l = new Label(text);
-        l.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 12px; "
+        l.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; "
                 + "-fx-text-fill: " + color + ";");
         return l;
     }

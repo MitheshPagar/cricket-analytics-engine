@@ -167,7 +167,7 @@ public class TestMatchEngine {
 
         InningsResult result = inningsEngine.simulateInnings(
                 batting, bowlingOrder, remainingBalls,
-                target, decEngine, inningsNumber, firstInningsLead
+                target, decEngine, inningsNumber, firstInningsLead, bowlingPlan
         );
 
         matchBalls += result.getBalls();

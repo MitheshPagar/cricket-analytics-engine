@@ -1,14 +1,20 @@
 package com.cricket.engine;
 
+import java.util.List;
+import java.util.function.BiConsumer;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
-import java.util.List;
-import java.util.function.BiConsumer;
 
 /**
  * Screen shown before each team's bowling plan.
@@ -47,7 +53,9 @@ public class TeamSetupScreen {
         root.setCenter(buildCentre(stage));
         root.setBottom(buildFooter());
 
-        stage.setScene(new Scene(root, 1100, 680));
+        Scene scene = new Scene(root, 1100, 680);
+        FontLoader.apply(scene);
+        stage.setScene(scene);
         stage.show();
     }
 
@@ -59,14 +67,14 @@ public class TeamSetupScreen {
         header.setAlignment(Pos.CENTER_LEFT);
 
         Label title = new Label(teamSlot.toUpperCase() + " SETUP");
-        title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 20px; "
+        title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 20px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #d4a030;");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Label step = new Label(stepLabel);
-        step.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-text-fill: #6a8099;");
+        step.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; -fx-text-fill: #6a8099;");
 
         header.getChildren().addAll(title, spacer, step);
         return header;
@@ -79,7 +87,7 @@ public class TeamSetupScreen {
         centre.setAlignment(Pos.TOP_CENTER);
 
         Label prompt = new Label("How would you like to set up " + teamSlot + "?");
-        prompt.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 15px; -fx-text-fill: #c8d8e8;");
+        prompt.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 15px; -fx-text-fill: #c8d8e8;");
 
         // ── Two option cards ─────────────────────────────────────────────
         HBox cards = new HBox(32);
@@ -121,11 +129,11 @@ public class TeamSetupScreen {
                 + "-fx-border-width: 1; -fx-cursor: hand;");
 
         Label titleLbl = new Label(title);
-        titleLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 16px; "
+        titleLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 16px; "
                 + "-fx-font-weight: bold; -fx-text-fill: " + accentColor + ";");
 
         Label descLbl = new Label(description);
-        descLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
+        descLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
                 + "-fx-text-fill: #6a8099; -fx-text-alignment: center;");
         descLbl.setWrapText(true);
         descLbl.setAlignment(Pos.CENTER);
@@ -151,11 +159,11 @@ public class TeamSetupScreen {
         card.setStyle("-fx-background-color: #111820; -fx-border-color: #1a2535; -fx-border-width: 1;");
 
         Label titleLbl = new Label(title);
-        titleLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 16px; "
+        titleLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 16px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #2a3f55;");
 
         Label descLbl = new Label(description);
-        descLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
+        descLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
                 + "-fx-text-fill: #2a3f55; -fx-text-alignment: center;");
         descLbl.setWrapText(true);
         descLbl.setAlignment(Pos.CENTER);
@@ -172,19 +180,19 @@ public class TeamSetupScreen {
         card.setStyle("-fx-background-color: #162030; -fx-border-color: #2a3f55; -fx-border-width: 1;");
 
         Label titleLbl = new Label("LOAD TEAM");
-        titleLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 16px; "
+        titleLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 16px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #27ae60;");
 
         ComboBox<String> dropdown = new ComboBox<>();
         dropdown.getItems().addAll(savedNames);
         dropdown.setPromptText("Select saved team...");
         dropdown.setPrefWidth(220);
-        dropdown.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 12px; "
+        dropdown.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; "
                 + "-fx-background-color: #1e2d3e; -fx-text-fill: #c8d8e8;");
 
         Button loadBtn = new Button("Load →");
         loadBtn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; "
-                + "-fx-font-family: 'Courier New'; -fx-font-weight: bold; "
+                + "-fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; "
                 + "-fx-cursor: hand; -fx-padding: 6 16 6 16;");
         loadBtn.setOnAction(e -> {
             String selected = dropdown.getValue();
@@ -208,7 +216,7 @@ public class TeamSetupScreen {
         Button backBtn = new Button("← Back");
         backBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #6a8099; "
                 + "-fx-border-color: #2a3f55; -fx-border-width: 1; -fx-cursor: hand; "
-                + "-fx-font-family: 'Courier New'; -fx-padding: 8 20 8 20;");
+                + "-fx-font-family: 'JetBrains Mono'; -fx-padding: 8 20 8 20;");
         backBtn.setOnAction(e -> onBack.run());
 
         footer.getChildren().add(backBtn);

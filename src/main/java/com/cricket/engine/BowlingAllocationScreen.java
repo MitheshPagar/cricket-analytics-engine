@@ -109,6 +109,7 @@ public class BowlingAllocationScreen {
 
         // ── Load CSS stylesheet ───────────────────────────────────────────
         Scene scene = new Scene(root, 1280, 820);
+                FontLoader.apply(scene);
         var css = getClass().getResource("/bowling-allocator.css");
         if (css != null) scene.getStylesheets().add(css.toExternalForm());
         stage.setScene(scene);
@@ -125,14 +126,14 @@ public class BowlingAllocationScreen {
         header.setAlignment(Pos.CENTER_LEFT);
 
         Label title = new Label(screenTitle.toUpperCase());
-        title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 16px; "
+        title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 16px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #d4a030;");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Label pitchLbl = new Label("Pitch: " + recommender.getPitchSummary());
-        pitchLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #6a8099;");
+        pitchLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #6a8099;");
 
         header.getChildren().addAll(title, spacer, pitchLbl);
         return header;
@@ -146,7 +147,7 @@ public class BowlingAllocationScreen {
         panel.setPrefWidth(210);
 
         Label title = new Label("BOWLING XI");
-        title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 10px; "
+        title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 10px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #6a8099;");
         panel.getChildren().add(title);
 
@@ -160,7 +161,7 @@ public class BowlingAllocationScreen {
             card.setAlignment(Pos.CENTER_LEFT);
 
             Label nameLbl = new Label(b.getName());
-            nameLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
+            nameLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
             nameLbl.setMaxWidth(120);
 
             Label badge = new Label(b.getRole().isBlank() ? "PT" : b.getRole());
@@ -196,7 +197,7 @@ public class BowlingAllocationScreen {
         ToggleButton blockToggle = new ToggleButton("Block Select");
         blockToggle.setStyle("-fx-background-color: transparent; -fx-text-fill: #6a8099; "
                 + "-fx-border-color: #2a3f55; -fx-border-width: 1; -fx-cursor: hand; "
-                + "-fx-font-family: 'Courier New'; -fx-padding: 5 12 5 12;");
+                + "-fx-font-family: 'JetBrains Mono'; -fx-padding: 5 12 5 12;");
         blockToggle.selectedProperty().addListener((obs, o, n) -> {
             blockSelectMode  = n;
             blockSelectStart = -1;
@@ -204,24 +205,24 @@ public class BowlingAllocationScreen {
                     + "; -fx-text-fill: " + (n ? "#d4a030" : "#6a8099")
                     + "; -fx-border-color: " + (n ? "#d4a030" : "#2a3f55")
                     + "; -fx-border-width: 1; -fx-cursor: hand; "
-                    + "-fx-font-family: 'Courier New'; -fx-padding: 5 12 5 12;");
+                    + "-fx-font-family: 'JetBrains Mono'; -fx-padding: 5 12 5 12;");
             setStatus(n ? "Block select ON — click first over, then last over of spell"
                         : "Click overs to assign  •  Right-click to clear");
         });
 
         Label hint = new Label("Click = assign  •  Right-click = clear  •  Gold border = pitch recommended");
-        hint.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-text-fill: #6a8099; -fx-font-style: italic;");
+        hint.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 10px; -fx-text-fill: #6a8099; -fx-font-style: italic;");
 
         Button autoFillBtn = new Button("⚡ Auto-Fill");
         autoFillBtn.setStyle("-fx-background-color: #1a3050; -fx-text-fill: #d4a030; "
                 + "-fx-border-color: #d4a030; -fx-border-width: 1; -fx-cursor: hand; "
-                + "-fx-font-family: 'Courier New'; -fx-font-weight: bold; -fx-padding: 5 12 5 12;");
+                + "-fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; -fx-padding: 5 12 5 12;");
         autoFillBtn.setOnAction(e -> autoFill());
 
         Button clearAllBtn = new Button("✕ Clear All");
         clearAllBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #c0392b; "
                 + "-fx-border-color: #c0392b; -fx-border-width: 1; -fx-cursor: hand; "
-                + "-fx-font-family: 'Courier New'; -fx-padding: 5 12 5 12;");
+                + "-fx-font-family: 'JetBrains Mono'; -fx-padding: 5 12 5 12;");
         clearAllBtn.setOnAction(e -> {
             for (int i = 1; i <= 90; i++) plan.clear(i);
             refreshGrid();
@@ -237,7 +238,7 @@ public class BowlingAllocationScreen {
 
         for (int col = 0; col < OVERS_PER_ROW; col++) {
             Label h = new Label(String.valueOf(col + 1));
-            h.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-text-fill: #6a8099;");
+            h.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 10px; -fx-text-fill: #6a8099;");
             h.setPrefWidth(CELL_W);
             h.setAlignment(Pos.CENTER);
             grid.add(h, col + 1, 0);
@@ -247,7 +248,7 @@ public class BowlingAllocationScreen {
         for (int row = 0; row < totalRows; row++) {
             Label rowLbl = new Label((row * OVERS_PER_ROW + 1) + "–"
                     + Math.min((row + 1) * OVERS_PER_ROW, TOTAL_OVERS));
-            rowLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 9px; -fx-text-fill: #6a8099;");
+            rowLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 9px; -fx-text-fill: #6a8099;");
             rowLbl.setPrefWidth(44);
             rowLbl.setAlignment(Pos.CENTER_RIGHT);
             grid.add(rowLbl, 0, row + 1);
@@ -267,7 +268,7 @@ public class BowlingAllocationScreen {
         scroll.setPrefHeight(580);
 
         statusLabel = new Label("Select a bowler from the left panel first.");
-        statusLabel.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #6a8099;");
+        statusLabel.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #6a8099;");
 
         panel.getChildren().addAll(controls, scroll, statusLabel);
         return panel;
@@ -333,7 +334,7 @@ public class BowlingAllocationScreen {
         panel.setPrefWidth(190);
 
         Label title = new Label("OVER SUMMARY");
-        title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 10px; "
+        title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 10px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #6a8099;");
         panel.getChildren().add(title);
 
@@ -342,11 +343,11 @@ public class BowlingAllocationScreen {
             row.setAlignment(Pos.CENTER_LEFT);
 
             Label nameLbl = new Label(b.getShortName());
-            nameLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
+            nameLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
             nameLbl.setPrefWidth(70);
 
             Label countLbl = new Label("0 ov");
-            countLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #6a8099; -fx-font-weight: bold;");
+            countLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #6a8099; -fx-font-weight: bold;");
             countLbl.setId("sum-" + b.getName().replace(" ", "_"));
             summaryLabels.put(b.getName(), countLbl);
 
@@ -357,14 +358,14 @@ public class BowlingAllocationScreen {
         panel.getChildren().add(new Separator());
 
         Label totalLbl = new Label("Total: 0 / 90");
-        totalLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-text-fill: #c8d8e8; -fx-font-weight: bold;");
+        totalLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; -fx-text-fill: #c8d8e8; -fx-font-weight: bold;");
         totalLbl.setId("sumTotal");
         panel.getChildren().add(totalLbl);
 
         panel.getChildren().add(new Separator());
 
         Label legendTitle = new Label("LEGEND");
-        legendTitle.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 10px; "
+        legendTitle.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 10px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #6a8099;");
         panel.getChildren().add(legendTitle);
 
@@ -382,7 +383,7 @@ public class BowlingAllocationScreen {
             Label dot = new Label("●");
             dot.setStyle("-fx-text-fill: " + entry[0] + "; -fx-font-size: 14px;");
             Label lbl = new Label(entry[1]);
-            lbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-text-fill: #6a8099;");
+            lbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 10px; -fx-text-fill: #6a8099;");
             row.getChildren().addAll(dot, lbl);
             panel.getChildren().add(row);
         }
@@ -401,12 +402,12 @@ public class BowlingAllocationScreen {
         Button backBtn = new Button("← Back");
         backBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #6a8099; "
                 + "-fx-border-color: #2a3f55; -fx-border-width: 1; -fx-cursor: hand; "
-                + "-fx-font-family: 'Courier New'; -fx-padding: 8 20 8 20;");
+                + "-fx-font-family: 'JetBrains Mono'; -fx-padding: 8 20 8 20;");
         backBtn.setOnAction(e -> onBack.run());
 
         Button nextBtn = new Button("Next →");
         nextBtn.setStyle("-fx-background-color: #d4a030; -fx-text-fill: #0f1923; "
-                + "-fx-font-family: 'Courier New'; -fx-font-weight: bold; "
+                + "-fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; "
                 + "-fx-font-size: 13px; -fx-cursor: hand; -fx-padding: 8 20 8 20;");
         nextBtn.setOnAction(e -> onNext.accept(plan));
 
@@ -496,7 +497,7 @@ public class BowlingAllocationScreen {
             if (lbl != null) {
                 lbl.setText(count + " ov");
                 String color = count >= 20 ? "#d4a030" : count >= 10 ? "#27ae60" : "#6a8099";
-                lbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
+                lbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
                         + "-fx-text-fill: " + color + "; -fx-font-weight: bold;");
             }
         }

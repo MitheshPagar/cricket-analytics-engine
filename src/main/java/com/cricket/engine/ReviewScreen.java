@@ -1,15 +1,19 @@
 package com.cricket.engine;
 
+import java.util.Map;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
-import java.util.Map;
 
 public class ReviewScreen {
 
@@ -34,11 +38,11 @@ public class ReviewScreen {
         header.setAlignment(Pos.CENTER_LEFT);
 
         Label title = new Label("MATCH REVIEW");
-        title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 20px; "
+        title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 20px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #d4a030;");
 
         Label step = new Label("Step 4 of 4");
-        step.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-text-fill: #6a8099;");
+        step.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; -fx-text-fill: #6a8099;");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -67,12 +71,12 @@ public class ReviewScreen {
         Button backBtn = new Button("← Back");
         backBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #6a8099; "
                 + "-fx-border-color: #2a3f55; -fx-border-width: 1; -fx-cursor: hand; "
-                + "-fx-font-family: 'Courier New'; -fx-padding: 8 20 8 20;");
+                + "-fx-font-family: 'JetBrains Mono'; -fx-padding: 8 20 8 20;");
         backBtn.setOnAction(e -> onBack.run());
 
         Button runBtn = new Button("▶  RUN MATCH");
         runBtn.setStyle("-fx-background-color: #d4a030; -fx-text-fill: #0f1923; "
-                + "-fx-font-family: 'Courier New'; -fx-font-weight: bold; "
+                + "-fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; "
                 + "-fx-font-size: 15px; -fx-cursor: hand; -fx-padding: 10 32 10 32;");
         runBtn.setOnAction(e -> onRun.run());
 
@@ -84,7 +88,9 @@ public class ReviewScreen {
         root.setCenter(centre);
         root.setBottom(footer);
 
-        stage.setScene(new Scene(root, 1100, 680));
+        Scene scene = new Scene(root, 1100, 680);
+        FontLoader.apply(scene);
+        stage.setScene(scene);
         stage.show();
     }
 
@@ -96,7 +102,7 @@ public class ReviewScreen {
         card.setPrefWidth(240);
 
         Label title = new Label("PITCH");
-        title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
+        title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #6a8099;");
         card.getChildren().add(title);
         card.getChildren().add(new Separator());
@@ -110,7 +116,7 @@ public class ReviewScreen {
             addPitchRow(card, "Boundary", p.getBoundary());
         } else {
             Label none = new Label("Default (neutral)");
-            none.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #6a8099;");
+            none.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #6a8099;");
             card.getChildren().add(none);
         }
 
@@ -122,12 +128,12 @@ public class ReviewScreen {
         row.setAlignment(Pos.CENTER_LEFT);
 
         Label lbl = new Label(label);
-        lbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
+        lbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
         lbl.setPrefWidth(80);
 
         String color = value > 1.2 ? "#d4a030" : value < 0.9 ? "#c0392b" : "#27ae60";
         Label val = new Label(String.format("%.1f", value));
-        val.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
+        val.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
                 + "-fx-text-fill: " + color + "; -fx-font-weight: bold;");
 
         row.getChildren().addAll(lbl, val);
@@ -144,14 +150,14 @@ public class ReviewScreen {
         card.setPrefWidth(280);
 
         Label title = new Label(heading.toUpperCase());
-        title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
+        title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #6a8099;");
         card.getChildren().add(title);
         card.getChildren().add(new Separator());
 
         if (plan == null) {
             Label none = new Label("No plan set — will use full XI rotation");
-            none.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #6a8099; -fx-font-style: italic;");
+            none.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #6a8099; -fx-font-style: italic;");
             none.setWrapText(true);
             card.getChildren().add(none);
             return card;
@@ -169,12 +175,12 @@ public class ReviewScreen {
             row.setAlignment(Pos.CENTER_LEFT);
 
             Label nameLbl = new Label(player);
-            nameLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
+            nameLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
             nameLbl.setPrefWidth(180);
 
             String color = count >= 20 ? "#d4a030" : count >= 10 ? "#27ae60" : "#6a8099";
             Label countLbl = new Label(count + " ov");
-            countLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
+            countLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
                     + "-fx-text-fill: " + color + "; -fx-font-weight: bold;");
 
             row.getChildren().addAll(nameLbl, countLbl);
@@ -185,13 +191,13 @@ public class ReviewScreen {
 
         int unassigned = 90 - total;
         Label totalLbl = new Label("Assigned: " + total + " / 90 overs");
-        totalLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 12px; "
+        totalLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; "
                 + "-fx-text-fill: #c8d8e8; -fx-font-weight: bold;");
         card.getChildren().add(totalLbl);
 
         if (unassigned > 0) {
             Label warn = new Label("⚠  " + unassigned + " overs unassigned (will cycle last bowler)");
-            warn.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 10px; "
+            warn.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 10px; "
                     + "-fx-text-fill: #d4a030; -fx-font-style: italic;");
             warn.setWrapText(true);
             card.getChildren().add(warn);

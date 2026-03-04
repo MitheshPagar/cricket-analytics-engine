@@ -6,7 +6,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class PitchSetupScreen {
@@ -36,11 +40,11 @@ public class PitchSetupScreen {
         header.setPadding(new Insets(16, 24, 16, 24));
 
         Label title = new Label("PITCH CONDITIONS");
-        title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 20px; "
+        title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 20px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #d4a030;");
 
         Label step = new Label("Step 1 of 4");
-        step.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-text-fill: #6a8099;");
+        step.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; -fx-text-fill: #6a8099;");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -52,7 +56,7 @@ public class PitchSetupScreen {
         centre.setAlignment(Pos.CENTER);
 
         Label subtitle = new Label("Set the pitch conditions for this match");
-        subtitle.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 14px; -fx-text-fill: #c8d8e8;");
+        subtitle.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 14px; -fx-text-fill: #c8d8e8;");
 
         centre.getChildren().add(subtitle);
 
@@ -75,7 +79,7 @@ public class PitchSetupScreen {
             row.setMaxWidth(600);
 
             Label lbl = new Label(label);
-            lbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 13px; "
+            lbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 13px; "
                     + "-fx-text-fill: #c8d8e8;");
             lbl.setPrefWidth(240);
 
@@ -84,7 +88,7 @@ public class PitchSetupScreen {
             slider.setStyle("-fx-accent: #d4a030;");
 
             Label valLbl = new Label("1.0");
-            valLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 13px; "
+            valLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 13px; "
                     + "-fx-text-fill: #d4a030; -fx-font-weight: bold;");
             valLbl.setPrefWidth(40);
 
@@ -110,7 +114,7 @@ public class PitchSetupScreen {
 
         Button nextBtn = new Button("Next: India's Bowling Plan →");
         nextBtn.setStyle("-fx-background-color: #d4a030; -fx-text-fill: #0f1923; "
-                + "-fx-font-family: 'Courier New'; -fx-font-weight: bold; "
+                + "-fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; "
                 + "-fx-font-size: 13px; -fx-cursor: hand; -fx-padding: 8 20 8 20;");
         nextBtn.setOnAction(e -> {
             config.pitchProfile = new PitchProfile(green, dry, bounce, flat, boundary);
@@ -123,7 +127,9 @@ public class PitchSetupScreen {
         root.setCenter(centre);
         root.setBottom(footer);
 
-        stage.setScene(new Scene(root, 1100, 680));
+        Scene scene = new Scene(root, 1100, 680);
+        FontLoader.apply(scene);
+        stage.setScene(scene);
         stage.show();
     }
 }

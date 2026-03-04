@@ -27,7 +27,7 @@ public class InningsEngine {
             Integer target
     ) {
         return simulateInnings(battingOrder, bowlingOrder, maxBalls, target,
-                null, 0, 0);
+                null, 0, 0, null);
     }
 
     public InningsResult simulateInnings(
@@ -39,6 +39,20 @@ public class InningsEngine {
             int inningsNumber,
             int firstInningsLead
     ) {
+        return simulateInnings(battingOrder, bowlingOrder, maxBalls, target,
+                declarationEngine, inningsNumber, firstInningsLead, null);
+    }
+
+    public InningsResult simulateInnings(
+            List<String> battingOrder,
+            List<String> bowlingOrder,
+            int maxBalls,
+            Integer target,
+            DeclarationEngine declarationEngine,
+            int inningsNumber,
+            int firstInningsLead,
+            BowlingPlan bowlingPlan
+    ) {
         int totalRuns = 0;
         int wickets   = 0;
         int balls     = 0;
@@ -47,8 +61,7 @@ public class InningsEngine {
         int nonStrikerIndex = 1;
         int nextBatterIndex = 2;
 
-        int bowlerIndex = 0;
-        int spellBalls  = 0;
+        int bowlerIndex = 0;  // fallback only
 
         // ── Scorecard tracking ────────────────────────────────────────────
         Map<String, BatterRecord>  batRecords  = new LinkedHashMap<>();
@@ -71,7 +84,10 @@ public class InningsEngine {
         while (wickets < 10 && balls < maxBalls) {
 
             String striker    = battingOrder.get(strikerIndex);
-            String bowler     = bowlingOrder.get(bowlerIndex);
+            int currentOver   = (balls / 6) + 1; // 1-based over number
+            String bowler     = (bowlingPlan != null && bowlingPlan.getAssignment(currentOver) != null)
+                    ? bowlingPlan.getAssignment(currentOver)
+                    : bowlingOrder.get(bowlerIndex % bowlingOrder.size());
             String bowlRole   = roleLoader.getBowlRole(bowler);
             String batterHand = roleLoader.getBatRole(striker);
 
@@ -97,7 +113,6 @@ public class InningsEngine {
                     striker, bowler, bowlRole, batterHand);
 
             balls++;
-            spellBalls++;
 
             // Ensure bowler record exists
             bowlRecords.computeIfAbsent(bowler, BowlerRecord::new);
@@ -110,8 +125,8 @@ public class InningsEngine {
                 batRec.dismissalInfo = "b " + bowler;
                 bowlRec.record(0, true);
 
-                // Partnership ends
-                currentPartnership.balls++;
+                // Partnership ends — count the wicket ball
+                currentPartnership.record(0);
                 partnerships.add(currentPartnership);
 
                 // Fall of wicket
@@ -149,24 +164,19 @@ public class InningsEngine {
                     int temp = strikerIndex;
                     strikerIndex    = nonStrikerIndex;
                     nonStrikerIndex = temp;
-                    // Swap in partnership too
-                    currentPartnership = new Partnership(
-                            battingOrder.get(strikerIndex),
-                            battingOrder.get(nonStrikerIndex));
-                    currentPartnership.runs  = partnerships.isEmpty() ? 0
-                            : currentPartnership.runs;
+                    // Don't recreate partnership — just swap ends
                 }
             }
 
-            // End of over
+            // End of over — swap ends
             if (balls % 6 == 0) {
                 int temp = strikerIndex;
                 strikerIndex    = nonStrikerIndex;
                 nonStrikerIndex = temp;
 
-                if (spellBalls >= 30) {
+                // Fallback rotation if no plan
+                if (bowlingPlan == null) {
                     bowlerIndex = (bowlerIndex + 1) % bowlingOrder.size();
-                    spellBalls  = 0;
                 }
             }
         }
