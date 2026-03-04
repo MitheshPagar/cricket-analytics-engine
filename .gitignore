@@ -4,6 +4,8 @@ target/
 # Ignore match JSON data
 matches/
 
+resources/
+
 # Ignore generated CSV outputs
 *.csv
 
