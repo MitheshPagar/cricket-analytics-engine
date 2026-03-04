@@ -2,11 +2,14 @@ package com.cricket.engine;
 
 import java.util.Map;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -20,6 +23,7 @@ public class ReviewScreen {
     private final MatchConfig config;
     private final Runnable onRun;
     private final Runnable onBack;
+    private VBox simResultBox;
 
     public ReviewScreen(MatchConfig config, Runnable onRun, Runnable onBack) {
         this.config = config;
@@ -38,11 +42,11 @@ public class ReviewScreen {
         header.setAlignment(Pos.CENTER_LEFT);
 
         Label title = new Label("MATCH REVIEW");
-        title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 20px; "
+        title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 20px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #d4a030;");
 
         Label step = new Label("Step 4 of 4");
-        step.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; -fx-text-fill: #6a8099;");
+        step.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-text-fill: #6a8099;");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -71,26 +75,40 @@ public class ReviewScreen {
         Button backBtn = new Button("← Back");
         backBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #6a8099; "
                 + "-fx-border-color: #2a3f55; -fx-border-width: 1; -fx-cursor: hand; "
-                + "-fx-font-family: 'JetBrains Mono'; -fx-padding: 8 20 8 20;");
+                + "-fx-font-family: 'Courier New'; -fx-padding: 8 20 8 20;");
         backBtn.setOnAction(e -> onBack.run());
+
+        Button simBtn = new Button("⚡ SIMULATE (500x)");
+        simBtn.setStyle("-fx-background-color: #1a3050; -fx-text-fill: #d4a030; "
+                + "-fx-border-color: #d4a030; -fx-border-width: 1; "
+                + "-fx-font-family: 'Courier New'; -fx-font-weight: bold; "
+                + "-fx-font-size: 13px; -fx-cursor: hand; -fx-padding: 10 24 10 24;");
+        simBtn.setOnAction(e -> runSimulation(simBtn));
 
         Button runBtn = new Button("▶  RUN MATCH");
         runBtn.setStyle("-fx-background-color: #d4a030; -fx-text-fill: #0f1923; "
-                + "-fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; "
+                + "-fx-font-family: 'Courier New'; -fx-font-weight: bold; "
                 + "-fx-font-size: 15px; -fx-cursor: hand; -fx-padding: 10 32 10 32;");
         runBtn.setOnAction(e -> onRun.run());
 
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
-        footer.getChildren().addAll(backBtn, sp, runBtn);
+        footer.getChildren().addAll(backBtn, sp, simBtn, runBtn);
+
+        simResultBox = new VBox();
+        simResultBox.setStyle("-fx-background-color: #0f1923;");
+
+        VBox mainContent = new VBox();
+        mainContent.getChildren().addAll(centre, simResultBox);
+        ScrollPane scroll = new ScrollPane(mainContent);
+        scroll.setStyle("-fx-background-color: #0f1923; -fx-background: #0f1923;");
+        scroll.setFitToWidth(true);
 
         root.setTop(header);
-        root.setCenter(centre);
+        root.setCenter(scroll);
         root.setBottom(footer);
 
-        Scene scene = new Scene(root, 1100, 680);
-        FontLoader.apply(scene);
-        stage.setScene(scene);
+        stage.setScene(new Scene(root, 1100, 680));
         stage.show();
     }
 
@@ -102,7 +120,7 @@ public class ReviewScreen {
         card.setPrefWidth(240);
 
         Label title = new Label("PITCH");
-        title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
+        title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #6a8099;");
         card.getChildren().add(title);
         card.getChildren().add(new Separator());
@@ -116,7 +134,7 @@ public class ReviewScreen {
             addPitchRow(card, "Boundary", p.getBoundary());
         } else {
             Label none = new Label("Default (neutral)");
-            none.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #6a8099;");
+            none.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #6a8099;");
             card.getChildren().add(none);
         }
 
@@ -128,12 +146,12 @@ public class ReviewScreen {
         row.setAlignment(Pos.CENTER_LEFT);
 
         Label lbl = new Label(label);
-        lbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
+        lbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
         lbl.setPrefWidth(80);
 
         String color = value > 1.2 ? "#d4a030" : value < 0.9 ? "#c0392b" : "#27ae60";
         Label val = new Label(String.format("%.1f", value));
-        val.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
+        val.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
                 + "-fx-text-fill: " + color + "; -fx-font-weight: bold;");
 
         row.getChildren().addAll(lbl, val);
@@ -150,14 +168,14 @@ public class ReviewScreen {
         card.setPrefWidth(280);
 
         Label title = new Label(heading.toUpperCase());
-        title.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
+        title.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #6a8099;");
         card.getChildren().add(title);
         card.getChildren().add(new Separator());
 
         if (plan == null) {
             Label none = new Label("No plan set — will use full XI rotation");
-            none.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #6a8099; -fx-font-style: italic;");
+            none.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #6a8099; -fx-font-style: italic;");
             none.setWrapText(true);
             card.getChildren().add(none);
             return card;
@@ -175,12 +193,12 @@ public class ReviewScreen {
             row.setAlignment(Pos.CENTER_LEFT);
 
             Label nameLbl = new Label(player);
-            nameLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
+            nameLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-text-fill: #c8d8e8;");
             nameLbl.setPrefWidth(180);
 
             String color = count >= 20 ? "#d4a030" : count >= 10 ? "#27ae60" : "#6a8099";
             Label countLbl = new Label(count + " ov");
-            countLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
+            countLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11px; "
                     + "-fx-text-fill: " + color + "; -fx-font-weight: bold;");
 
             row.getChildren().addAll(nameLbl, countLbl);
@@ -191,18 +209,113 @@ public class ReviewScreen {
 
         int unassigned = 90 - total;
         Label totalLbl = new Label("Assigned: " + total + " / 90 overs");
-        totalLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; "
+        totalLbl.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 12px; "
                 + "-fx-text-fill: #c8d8e8; -fx-font-weight: bold;");
         card.getChildren().add(totalLbl);
 
         if (unassigned > 0) {
             Label warn = new Label("⚠  " + unassigned + " overs unassigned (will cycle last bowler)");
-            warn.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 10px; "
+            warn.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 10px; "
                     + "-fx-text-fill: #d4a030; -fx-font-style: italic;");
             warn.setWrapText(true);
             card.getChildren().add(warn);
         }
 
         return card;
+    }
+
+    // ── Monte Carlo Simulation ─────────────────────────────────────────────
+    private void runSimulation(javafx.scene.control.Button simBtn) {
+        simBtn.setDisable(true);
+        simBtn.setText("Simulating...");
+        simResultBox.getChildren().clear();
+
+        ProgressBar bar = new ProgressBar(0);
+        bar.setPrefWidth(400);
+        bar.setStyle("-fx-accent: #d4a030;");
+        Label progressLbl = new Label("Running 500 simulations...");
+        progressLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; -fx-text-fill: #6a8099;");
+
+        VBox loadingBox = new VBox(8, progressLbl, bar);
+        loadingBox.setAlignment(javafx.geometry.Pos.CENTER);
+        loadingBox.setPadding(new Insets(20));
+        simResultBox.getChildren().add(loadingBox);
+
+        new Thread(() -> {
+            MonteCarloEngine.SimResult result = MonteCarloEngine.run(config, 500, progress ->
+                    Platform.runLater(() -> bar.setProgress(progress / 500.0))
+            );
+            Platform.runLater(() -> {
+                simResultBox.getChildren().clear();
+                simResultBox.getChildren().add(buildSimResults(result));
+                simBtn.setDisable(false);
+                simBtn.setText("⚡ SIMULATE (500x)");
+            });
+        }).start();
+    }
+
+    private VBox buildSimResults(MonteCarloEngine.SimResult r) {
+        VBox box = new VBox(16);
+        box.setPadding(new Insets(20, 60, 20, 60));
+        box.setStyle("-fx-background-color: #0a1218; -fx-border-color: #d4a030; -fx-border-width: 1 0 0 0;");
+
+        Label heading = new Label("SIMULATION RESULTS  (" + r.total + " matches)");
+        heading.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 13px; "
+                + "-fx-font-weight: bold; -fx-text-fill: #d4a030;");
+        box.getChildren().add(heading);
+
+        // Win/Draw bars
+        HBox bars = new HBox(40);
+        bars.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        bars.getChildren().addAll(
+                buildWinBlock(config.teamAName, r.teamAWinPct(), "#c0392b"),
+                buildWinBlock("Draw",            r.drawPct(),     "#4a5568"),
+                buildWinBlock(config.teamBName, r.teamBWinPct(), "#27ae60")
+        );
+        box.getChildren().add(bars);
+
+        // Top performers
+        HBox performers = new HBox(60);
+        performers.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        VBox runBox = new VBox(4);
+        Label runTitle = new Label("🏏  TOP RUN SCORER");
+        runTitle.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 10px; -fx-text-fill: #6a8099; -fx-font-weight: bold;");
+        Label runVal = new Label(r.topRunScorer());
+        runVal.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; -fx-text-fill: #c8d8e8;");
+        runBox.getChildren().addAll(runTitle, runVal);
+
+        VBox wktBox = new VBox(4);
+        Label wktTitle = new Label("🎯  TOP WICKET TAKER");
+        wktTitle.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 10px; -fx-text-fill: #6a8099; -fx-font-weight: bold;");
+        Label wktVal = new Label(r.topWicketTaker());
+        wktVal.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; -fx-text-fill: #c8d8e8;");
+        wktBox.getChildren().addAll(wktTitle, wktVal);
+
+        performers.getChildren().addAll(runBox, wktBox);
+        box.getChildren().add(performers);
+
+        return box;
+    }
+
+    private VBox buildWinBlock(String label, double pct, String color) {
+        VBox block = new VBox(6);
+        block.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        block.setPrefWidth(220);
+
+        Label nameLbl = new Label(label.toUpperCase());
+        nameLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
+                + "-fx-text-fill: " + color + "; -fx-font-weight: bold;");
+
+        Label pctLbl = new Label(String.format("%.1f%%", pct));
+        pctLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 22px; "
+                + "-fx-text-fill: " + color + "; -fx-font-weight: bold;");
+
+        ProgressBar bar = new ProgressBar(pct / 100.0);
+        bar.setPrefWidth(200);
+        bar.setStyle("-fx-accent: " + color + ";");
+
+        block.getChildren().addAll(nameLbl, pctLbl, bar);
+        return block;
     }
 }
