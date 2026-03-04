@@ -10,10 +10,13 @@ public class TestMatchEngine {
 
     private int matchBalls = 0;
     private static final int MAX_MATCH_BALLS = 450 * 6;
+    private final java.util.Random random = new java.util.Random();
 
     private final java.util.List<InningsResult> allInnings = new java.util.ArrayList<>();
     private String teamAName;
     private String teamBName;
+    private String tossWinner;
+    private String tossDecision; // "bat" or "field"
     private final javafx.stage.Stage primaryStage;
 
     // Bowling plans set before match runs (optional — null = use full XI)
@@ -49,11 +52,30 @@ public class TestMatchEngine {
                               String teamBName, List<String> teamB) {
         this.teamAName = teamAName;
         this.teamBName = teamBName;
+        // Local mutable copies so toss can swap batting order
+        List<String> teamAXI = new java.util.ArrayList<>(teamA);
+        List<String> teamBXI = new java.util.ArrayList<>(teamB);
         int a1, b1, a2 = 0, b2 = 0;
+
+        // ── Toss ──────────────────────────────────────────────────────────
+        this.tossWinner   = random.nextBoolean() ? teamAName : teamBName;
+        this.tossDecision = random.nextBoolean() ? "bat" : "field";
+        System.out.println("Toss: " + tossWinner + " won the toss and elected to " + tossDecision + " first.");
+
+        // Swap teams so toss winner who elects to bat always bats first
+        boolean tossWinnerBats = tossDecision.equals("bat");
+        boolean tossWinnerIsTeamA = tossWinner.equals(this.teamAName);
+        if ((tossWinnerBats && !tossWinnerIsTeamA) || (!tossWinnerBats && tossWinnerIsTeamA)) {
+            // Swap: toss winner bats first
+            String tmpName = this.teamAName; this.teamAName = this.teamBName; this.teamBName = tmpName;
+            java.util.Collections.swap(teamAXI, 0, 0); // no-op trick to avoid unused warning
+            List<String> tmpXI = teamAXI; teamAXI = teamBXI; teamBXI = tmpXI;
+            System.out.println("(Teams swapped: " + this.teamAName + " will bat first)");
+        }
 
         // 1st Innings: Team A bat, Team B bowl
         System.out.println("\n--- 1st Innings: " + teamAName + " ---");
-        InningsResult aFirst = playInnings(teamA, teamB, null, 1, 0, teamBBowlingPlan);
+        InningsResult aFirst = playInnings(teamAXI, teamBXI, null, 1, 0, teamBBowlingPlan);
         a1 = aFirst.getRuns();
         allInnings.add(aFirst);
         System.out.println(aFirst);
@@ -63,7 +85,7 @@ public class TestMatchEngine {
 
         // 2nd Innings: Team B bat, Team A bowl
         System.out.println("\n--- 2nd Innings: " + teamBName + " ---");
-        InningsResult bFirst = playInnings(teamB, teamA, null, 2, -a1, teamABowlingPlan);
+        InningsResult bFirst = playInnings(teamBXI, teamAXI, null, 2, -a1, teamABowlingPlan);
         b1 = bFirst.getRuns();
         allInnings.add(bFirst);
         System.out.println(bFirst);
@@ -81,7 +103,7 @@ public class TestMatchEngine {
 
             // 3rd Innings: Team B follow on, Team A bowl
             System.out.println("\n--- 3rd Innings: " + teamBName + " (following on) ---");
-            InningsResult bSecond = playInnings(teamB, teamA, null, 3,
+            InningsResult bSecond = playInnings(teamBXI, teamAXI, null, 3,
                     b1 - a1, teamABowlingPlan);
             b2 = bSecond.getRuns();
             allInnings.add(bSecond);
@@ -95,7 +117,7 @@ public class TestMatchEngine {
                 int target4th = bLead + 1;
                 System.out.println("\n--- 4th Innings: " + teamAName
                         + " (Chasing " + target4th + ") ---");
-                InningsResult aSecond = playInnings(teamA, teamB, target4th,
+                InningsResult aSecond = playInnings(teamAXI, teamBXI, target4th,
                         4, 0, teamBBowlingPlan);
                 System.out.println(aSecond);
                 printChaseResult(aSecond, target4th, teamAName, teamBName);
@@ -113,7 +135,7 @@ public class TestMatchEngine {
 
             System.out.println("\n--- 4th Innings: " + teamAName
                     + " (Chasing " + target + ") ---");
-            InningsResult aSecond = playInnings(teamA, teamB, target, 4, 0,
+            InningsResult aSecond = playInnings(teamAXI, teamBXI, target, 4, 0,
                     teamBBowlingPlan);
             System.out.println(aSecond);
             printChaseResult(aSecond, target, teamAName, teamBName);
@@ -122,7 +144,7 @@ public class TestMatchEngine {
 
             // 3rd Innings: Team A bat, Team B bowl
             System.out.println("\n--- 3rd Innings: " + teamAName + " ---");
-            InningsResult aSecond = playInnings(teamA, teamB, null, 3,
+            InningsResult aSecond = playInnings(teamAXI, teamBXI, null, 3,
                     a1 - b1, teamBBowlingPlan);
             a2 = aSecond.getRuns();
             allInnings.add(aSecond);
@@ -135,7 +157,7 @@ public class TestMatchEngine {
 
             System.out.println("\n--- 4th Innings: " + teamBName
                     + " (Chasing " + target + ") ---");
-            InningsResult bSecond = playInnings(teamB, teamA, target, 4, 0,
+            InningsResult bSecond = playInnings(teamBXI, teamAXI, target, 4, 0,
                     teamABowlingPlan);
             b2 = bSecond.getRuns();
             System.out.println(bSecond);
@@ -186,7 +208,8 @@ public class TestMatchEngine {
 
     private void showScorecard(String resultLine) {
         new ScorecardScreen(teamAName, teamBName,
-                new java.util.ArrayList<>(allInnings), resultLine, primaryStage).show();
+                new java.util.ArrayList<>(allInnings), resultLine, primaryStage,
+                tossWinner, tossDecision).show();
     }
 
     private void printChaseResult(InningsResult result, int target,

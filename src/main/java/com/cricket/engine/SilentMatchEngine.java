@@ -30,6 +30,17 @@ public class SilentMatchEngine {
         allInnings.clear();
         matchBalls = 0;
 
+        // ── Toss ──────────────────────────────────────────────────────────
+        java.util.Random rng = new java.util.Random();
+        String tossWinner = rng.nextBoolean() ? teamAName : teamBName;
+        boolean electedToBat = rng.nextBoolean();
+        boolean tossWinnerIsA = tossWinner.equals(teamAName);
+        if ((electedToBat && !tossWinnerIsA) || (!electedToBat && tossWinnerIsA)) {
+            String tmpName = teamAName; teamAName = teamBName; teamBName = tmpName;
+            List<String> tmpXI = teamA; teamA = teamB; teamB = tmpXI;
+            BowlingPlan tmpPlan = teamABowlingPlan; teamABowlingPlan = teamBBowlingPlan; teamBBowlingPlan = tmpPlan;
+        }
+
         DeclarationEngine decEngine = new DeclarationEngine();
 
         // 1st innings
