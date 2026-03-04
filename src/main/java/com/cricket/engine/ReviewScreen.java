@@ -24,6 +24,7 @@ public class ReviewScreen {
     private final Runnable onRun;
     private final Runnable onBack;
     private VBox simResultBox;
+    private javafx.scene.control.TextField simCountField;
 
     public ReviewScreen(MatchConfig config, Runnable onRun, Runnable onBack) {
         this.config = config;
@@ -78,10 +79,20 @@ public class ReviewScreen {
                 + "-fx-font-family: 'Courier New'; -fx-padding: 8 20 8 20;");
         backBtn.setOnAction(e -> onBack.run());
 
-        Button simBtn = new Button("⚡ SIMULATE (500x)");
+        simCountField = new javafx.scene.control.TextField("500");
+        simCountField.setPrefWidth(80);
+        simCountField.setStyle("-fx-background-color: #1e2d3e; -fx-text-fill: #c8d8e8; "
+                + "-fx-border-color: #2a3f55; -fx-border-width: 1; "
+                + "-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; "
+                + "-fx-padding: 8 8 8 8;");
+
+        Label simLabel = new Label("×  sims");
+        simLabel.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; -fx-text-fill: #6a8099;");
+
+        Button simBtn = new Button("⚡ SIMULATE");
         simBtn.setStyle("-fx-background-color: #1a3050; -fx-text-fill: #d4a030; "
                 + "-fx-border-color: #d4a030; -fx-border-width: 1; "
-                + "-fx-font-family: 'Courier New'; -fx-font-weight: bold; "
+                + "-fx-font-family: 'JetBrains Mono'; -fx-font-weight: bold; "
                 + "-fx-font-size: 13px; -fx-cursor: hand; -fx-padding: 10 24 10 24;");
         simBtn.setOnAction(e -> runSimulation(simBtn));
 
@@ -93,7 +104,7 @@ public class ReviewScreen {
 
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
-        footer.getChildren().addAll(backBtn, sp, simBtn, runBtn);
+        footer.getChildren().addAll(backBtn, sp, simCountField, simLabel, simBtn, runBtn);
 
         simResultBox = new VBox();
         simResultBox.setStyle("-fx-background-color: #0f1923;");
@@ -226,6 +237,15 @@ public class ReviewScreen {
 
     // ── Monte Carlo Simulation ─────────────────────────────────────────────
     private void runSimulation(javafx.scene.control.Button simBtn) {
+        int simCount;
+        try {
+            simCount = Integer.parseInt(simCountField.getText().trim());
+            if (simCount < 1 || simCount > 10000) throw new NumberFormatException();
+        } catch (NumberFormatException ex) {
+            simCountField.setStyle(simCountField.getStyle() + "-fx-border-color: #c0392b;");
+            return;
+        }
+
         simBtn.setDisable(true);
         simBtn.setText("Simulating...");
         simResultBox.getChildren().clear();
@@ -233,7 +253,7 @@ public class ReviewScreen {
         ProgressBar bar = new ProgressBar(0);
         bar.setPrefWidth(400);
         bar.setStyle("-fx-accent: #d4a030;");
-        Label progressLbl = new Label("Running 500 simulations...");
+        Label progressLbl = new Label("Running " + simCount + " simulations...");
         progressLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 12px; -fx-text-fill: #6a8099;");
 
         VBox loadingBox = new VBox(8, progressLbl, bar);
@@ -241,36 +261,47 @@ public class ReviewScreen {
         loadingBox.setPadding(new Insets(20));
         simResultBox.getChildren().add(loadingBox);
 
+        final int finalSimCount = simCount;
         new Thread(() -> {
-            MonteCarloEngine.SimResult result = MonteCarloEngine.run(config, 500, progress ->
-                    Platform.runLater(() -> bar.setProgress(progress / 500.0))
+            MonteCarloEngine.SimResult result = MonteCarloEngine.run(config, finalSimCount, progress ->
+                    Platform.runLater(() -> bar.setProgress(progress / (double) finalSimCount))
             );
+
+            // Export to Excel
+            try {
+                String path = System.getProperty("user.home") + "/allStats.xlsx";
+                StatsExporter.export(result, config.teamAName, config.teamBName, finalSimCount, path);
+                System.out.println("Stats exported to: " + path);
+            } catch (Exception ex) {
+                System.err.println("Excel export failed: " + ex.getMessage());
+            }
+
             Platform.runLater(() -> {
                 simResultBox.getChildren().clear();
-                simResultBox.getChildren().add(buildSimResults(result));
+                simResultBox.getChildren().add(buildSimResults(result, finalSimCount));
                 simBtn.setDisable(false);
-                simBtn.setText("⚡ SIMULATE (500x)");
+                simBtn.setText("⚡ SIMULATE");
             });
         }).start();
     }
 
-    private VBox buildSimResults(MonteCarloEngine.SimResult r) {
+    private VBox buildSimResults(MonteCarloEngine.SimResult r, int simCount) {
         VBox box = new VBox(16);
         box.setPadding(new Insets(20, 60, 20, 60));
         box.setStyle("-fx-background-color: #0a1218; -fx-border-color: #d4a030; -fx-border-width: 1 0 0 0;");
 
-        Label heading = new Label("SIMULATION RESULTS  (" + r.total + " matches)");
+        Label heading = new Label("SIMULATION RESULTS  (" + simCount + " matches)");
         heading.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 13px; "
                 + "-fx-font-weight: bold; -fx-text-fill: #d4a030;");
         box.getChildren().add(heading);
 
-        // Win/Draw bars
+        // Win/Draw counts
         HBox bars = new HBox(40);
         bars.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         bars.getChildren().addAll(
-                buildWinBlock(config.teamAName, r.teamAWinPct(), "#c0392b"),
-                buildWinBlock("Draw",            r.drawPct(),     "#4a5568"),
-                buildWinBlock(config.teamBName, r.teamBWinPct(), "#27ae60")
+                buildWinBlock(config.teamAName, r.teamAWins, simCount, "#c0392b"),
+                buildWinBlock("Draw",            r.draws,    simCount, "#4a5568"),
+                buildWinBlock(config.teamBName, r.teamBWins, simCount, "#27ae60")
         );
         box.getChildren().add(bars);
 
@@ -298,7 +329,7 @@ public class ReviewScreen {
         return box;
     }
 
-    private VBox buildWinBlock(String label, double pct, String color) {
+    private VBox buildWinBlock(String label, int wins, int total, String color) {
         VBox block = new VBox(6);
         block.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         block.setPrefWidth(220);
@@ -307,15 +338,16 @@ public class ReviewScreen {
         nameLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 11px; "
                 + "-fx-text-fill: " + color + "; -fx-font-weight: bold;");
 
-        Label pctLbl = new Label(String.format("%.1f%%", pct));
-        pctLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 22px; "
+        Label winsLbl = new Label(wins + " / " + total);
+        winsLbl.setStyle("-fx-font-family: 'JetBrains Mono'; -fx-font-size: 22px; "
                 + "-fx-text-fill: " + color + "; -fx-font-weight: bold;");
 
-        ProgressBar bar = new ProgressBar(pct / 100.0);
+        double pct = total == 0 ? 0 : wins / (double) total;
+        ProgressBar bar = new ProgressBar(pct);
         bar.setPrefWidth(200);
         bar.setStyle("-fx-accent: " + color + ";");
 
-        block.getChildren().addAll(nameLbl, pctLbl, bar);
+        block.getChildren().addAll(nameLbl, winsLbl, bar);
         return block;
     }
 }
