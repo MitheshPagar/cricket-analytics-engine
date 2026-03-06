@@ -101,6 +101,28 @@ public class Stats {
                (baselineWicketsPerBall * (1.0 - weight));
     }
 
+    /**
+     * Balls Per Dismissal — inverse of WPB, used for batter quality metric.
+     * Higher = harder to dismiss. A great batter might be 80 BPD, a weak one 20.
+     */
+    public double getBallsPerDismissal() {
+        if (dismissals == 0) return balls > 0 ? balls : 0.0;
+        return (double) balls / dismissals;
+    }
+
+    /**
+     * Adjusted BPD using Bayesian shrinkage toward baseline.
+     * baselineBPD = 1.0 / baselineWPB (converted from the shared WPB baseline).
+     */
+    public double getAdjustedBallsPerDismissal(double baselineBPD) {
+        if (balls == 0) return baselineBPD;
+
+        double playerBPD = getBallsPerDismissal();
+        double weight = getSampleWeight();
+
+        return (playerBPD * weight) + (baselineBPD * (1.0 - weight));
+    }
+
     public boolean isSmallSample() {
         return balls < 100;
     }

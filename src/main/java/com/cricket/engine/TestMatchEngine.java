@@ -66,10 +66,10 @@ public class TestMatchEngine {
         boolean tossWinnerBats = tossDecision.equals("bat");
         boolean tossWinnerIsTeamA = tossWinner.equals(this.teamAName);
         if ((tossWinnerBats && !tossWinnerIsTeamA) || (!tossWinnerBats && tossWinnerIsTeamA)) {
-            // Swap: toss winner bats first
+            // Swap everything: XIs, names AND bowling plans together
             String tmpName = this.teamAName; this.teamAName = this.teamBName; this.teamBName = tmpName;
-            java.util.Collections.swap(teamAXI, 0, 0); // no-op trick to avoid unused warning
             List<String> tmpXI = teamAXI; teamAXI = teamBXI; teamBXI = tmpXI;
+            BowlingPlan tmpPlan = teamABowlingPlan; teamABowlingPlan = teamBBowlingPlan; teamBBowlingPlan = tmpPlan;
             System.out.println("(Teams swapped: " + this.teamAName + " will bat first)");
         }
 

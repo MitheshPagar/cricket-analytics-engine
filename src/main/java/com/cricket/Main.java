@@ -165,17 +165,17 @@ public class Main {
 ) throws Exception {
 
         CsvWriterUtil csv = new CsvWriterUtil();
-        csv.open("sim_stats_nerfed.csv"); // new file to compare with old one
+        csv.open("sim_stats_fixed.csv"); // new file to compare with old one
 
         List<String> header = new ArrayList<>();
         header.add("Player");
 
-        // Batting: Player, [role Avg, role SR, role Balls, role WPB, role RPB] per role
+        // Batting: Player, [role Avg, role SR, role Balls, role BPD, role RPB] per role
         for (String role : ROLE_ORDER) {
             header.add(role + " Avg");
             header.add(role + " SR");
             header.add(role + " Balls");
-            header.add(role + " WPB");   // final WPB vs median bowler of this type
+            header.add(role + " BPD");   // balls per dismissal vs median bowler of this type
             header.add(role + " RPB");   // final RPB vs median bowler of this type
         }
 

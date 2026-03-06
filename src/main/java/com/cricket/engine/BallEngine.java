@@ -48,12 +48,14 @@ public class BallEngine {
                 ? baselineCalculator.getLhbRunsPerBall()
                 : baselineCalculator.getRhbRunsPerBall();
 
-        // WPB baseline — single authoritative value from batter dismissal data
-        // Both batter and bowler stats shrink toward the same dismissal rate
+        // Shared baseline values
         double sharedWPBBaseline = baselineCalculator.getOverallWicketsPerBall();
+        double sharedBPDBaseline = sharedWPBBaseline > 0 ? 1.0 / sharedWPBBaseline : 55.0;
 
         double batterRPB = batStats.getAdjustedRunsPerBall(batBaselineRPB);
-        double batterWPB = batStats.getAdjustedWicketsPerBall(sharedWPBBaseline);
+        // Batter quality measured in BPD — higher = harder to dismiss
+        double batterBPD = batStats.getAdjustedBallsPerDismissal(sharedBPDBaseline);
+        double batterWPB = batterBPD > 0 ? 1.0 / batterBPD : sharedWPBBaseline;
 
         double bowlerRPB = bowlStats.getAdjustedRunsPerBall(bowlBaselineRPB);
         double bowlerWPB = bowlStats.getAdjustedWicketsPerBall(sharedWPBBaseline);
