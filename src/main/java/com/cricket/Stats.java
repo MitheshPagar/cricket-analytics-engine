@@ -105,6 +105,20 @@ public class Stats {
         return balls < 100;
     }
 
+    /**
+     * Returns a diagnostic string showing raw vs nerfed stats.
+     * Useful for verifying the nerf is being applied.
+     */
+    public String debugNerf(double baselineRPB, double baselineWPB) {
+        double weight = getSampleWeight();
+        return String.format(
+            "balls=%d weight=%.3f | rawRPB=%.4f -> adjRPB=%.4f (base=%.4f) | rawWPB=%.4f -> adjWPB=%.4f (base=%.4f)",
+            balls, weight,
+            getRunsPerBall(), getAdjustedRunsPerBall(baselineRPB), baselineRPB,
+            getWicketsPerBall(), getAdjustedWicketsPerBall(baselineWPB), baselineWPB
+        );
+    }
+
     public int getConfidenceConstant() {
         return CONFIDENCE;
     }

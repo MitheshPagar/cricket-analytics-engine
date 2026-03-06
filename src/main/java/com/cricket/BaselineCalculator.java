@@ -14,6 +14,9 @@ public class BaselineCalculator {
     private double rhbRunsPerBall = 0.0;
     private double rhbWicketsPerBall = 0.0;
 
+    // Single authoritative WPB baseline derived from batter dismissal data
+    private double overallWicketsPerBall = 0.02;
+
     public void compute(
             Map<String, Map<String, Stats>> batterStats,
             Map<String, Map<String, Stats>> bowlerStats
@@ -23,11 +26,16 @@ public class BaselineCalculator {
         Map<String, Long> roleTotalRuns = new HashMap<>();
         Map<String, Long> roleTotalWickets = new HashMap<>();
 
+        final int MIN_BALLS_FOR_BASELINE = 200; // exclude tiny samples from baseline
+
         for (Map<String, Stats> playerMap : batterStats.values()) {
             for (Map.Entry<String, Stats> entry : playerMap.entrySet()) {
 
                 String role = entry.getKey();
                 Stats stats = entry.getValue();
+
+                // Only include players with enough data to be meaningful
+                if (stats.getBalls() < MIN_BALLS_FOR_BASELINE) continue;
 
                 roleTotalBalls.merge(role, (long) stats.getBalls(), Long::sum);
                 roleTotalRuns.merge(role, (long) stats.getRuns(), Long::sum);
@@ -60,14 +68,14 @@ public class BaselineCalculator {
         for (Map<String, Stats> bowlerMap : bowlerStats.values()) {
 
             Stats vsLHB = bowlerMap.get("LHB");
-            if (vsLHB != null) {
+            if (vsLHB != null && vsLHB.getBalls() >= MIN_BALLS_FOR_BASELINE) {
                 totalLHBBalls += vsLHB.getBalls();
                 totalLHBRuns += vsLHB.getRuns();
                 totalLHBWickets += vsLHB.getDismissals();
             }
 
             Stats vsRHB = bowlerMap.get("RHB");
-            if (vsRHB != null) {
+            if (vsRHB != null && vsRHB.getBalls() >= MIN_BALLS_FOR_BASELINE) {
                 totalRHBBalls += vsRHB.getBalls();
                 totalRHBRuns += vsRHB.getRuns();
                 totalRHBWickets += vsRHB.getDismissals();
@@ -84,7 +92,22 @@ public class BaselineCalculator {
             rhbWicketsPerBall = (double) totalRHBWickets / totalRHBBalls;
         }
 
+        // Compute single overall WPB from all batter dismissal data
+        long totalBalls = 0, totalDismissals = 0;
+        for (Map<String, Stats> playerMap : batterStats.values()) {
+            for (Stats s : playerMap.values()) {
+                if (s.getBalls() >= MIN_BALLS_FOR_BASELINE) {
+                    totalBalls      += s.getBalls();
+                    totalDismissals += s.getDismissals();
+                }
+            }
+        }
+        if (totalBalls > 0) overallWicketsPerBall = (double) totalDismissals / totalBalls;
+
         System.out.println("Baselines computed successfully");
+        System.out.println(String.format(
+            "  Overall WPB=%.5f | LHB RPB=%.4f | RHB RPB=%.4f",
+            overallWicketsPerBall, lhbRunsPerBall, rhbRunsPerBall));
     }
 
 
@@ -110,5 +133,9 @@ public class BaselineCalculator {
 
     public double getRhbWicketsPerBall() {
         return rhbWicketsPerBall;
+    }
+
+    public double getOverallWicketsPerBall() {
+        return overallWicketsPerBall;
     }
 }

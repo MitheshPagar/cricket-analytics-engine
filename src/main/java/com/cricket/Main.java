@@ -37,6 +37,7 @@ public class Main {
         
         Map<String, Map<String, Stats>> batterStats = new HashMap<>();
         Map<String, Map<String, Stats>> bowlerStats = new HashMap<>();
+        BaselineCalculator baselineCalculator = new BaselineCalculator();
 
         
         Files.list(com.cricket.engine.PathResolver.resolvePath("matches"))
@@ -53,9 +54,26 @@ public class Main {
         System.out.println("Total batters tracked: " + batterStats.size());
         System.out.println("Total bowlers tracked: " + bowlerStats.size());
 
+        // ── Nerf diagnostic: print sample players to verify shrinkage ───────
+        System.out.println("\n── Nerf Diagnostic (sample) ──────────────────────");
+        batterStats.entrySet().stream().limit(5).forEach(e -> {
+            e.getValue().forEach((role, s) -> {
+                double bRPB = baselineCalculator.getBaselineRunsPerBallForRole(role);
+                double bWPB = baselineCalculator.getBaselineWicketsPerBallForRole(role);
+                System.out.println("BAT " + e.getKey() + " vs " + role + ": " + s.debugNerf(bRPB, bWPB));
+            });
+        });
+        bowlerStats.entrySet().stream().limit(5).forEach(e -> {
+            e.getValue().forEach((hand, s) -> {
+                double bRPB = hand.equals("LHB") ? baselineCalculator.getLhbRunsPerBall() : baselineCalculator.getRhbRunsPerBall();
+                double bWPB = hand.equals("LHB") ? baselineCalculator.getLhbWicketsPerBall() : baselineCalculator.getRhbWicketsPerBall();
+                System.out.println("BOWL " + e.getKey() + " vs " + hand + ": " + s.debugNerf(bRPB, bWPB));
+            });
+        });
+        System.out.println("──────────────────────────────────────────────────\n");
+
         
         System.out.println("Computing baselines...");
-        BaselineCalculator baselineCalculator = new BaselineCalculator();
         baselineCalculator.compute(batterStats, bowlerStats);
         System.out.println("Baselines ready for simulation");
 
@@ -152,21 +170,23 @@ public class Main {
         List<String> header = new ArrayList<>();
         header.add("Player");
 
+        // Batting: Player, [role Avg, role SR, role Balls, role WPB, role RPB] per role
         for (String role : ROLE_ORDER) {
             header.add(role + " Avg");
             header.add(role + " SR");
-            header.add(role + " Adj_RPB");   // Nerfed Runs Per Ball
-            header.add(role + " Adj_WPB");   // Nerfed Wickets Per Ball
-            header.add(role + " Balls");     // Keep sample size for context
+            header.add(role + " Balls");
+            header.add(role + " WPB");   // final WPB vs median bowler of this type
+            header.add(role + " RPB");   // final RPB vs median bowler of this type
         }
 
-        header.add("LHB Adj_RPB_Conceded");
-        header.add("LHB Adj_WPB");
-        header.add("LHB Balls");
-
-        header.add("RHB Adj_RPB_Conceded");
-        header.add("RHB Adj_WPB");
-        header.add("RHB Balls");
+        // Bowling: [hand Balls, hand Avg, hand SR, hand WPB, hand RPB] per hand
+        for (String hand : new String[]{"LHB", "RHB"}) {
+            header.add(hand + " Balls");
+            header.add(hand + " Avg");
+            header.add(hand + " SR");
+            header.add(hand + " WPB");   // final WPB vs median batter of this hand
+            header.add(hand + " RPB");   // final RPB vs median batter of this hand
+        }
 
         csv.writeHeader(header.toArray(new String[0]));
 
@@ -179,41 +199,58 @@ public class Main {
             List<Object> row = new ArrayList<>();
             row.add(player);
 
-            Map<String, Stats> batMap = batterStats.getOrDefault(player, new HashMap<>());
+            double sharedWPBBaseline = baselineCalculator.getOverallWicketsPerBall();
 
+            Map<String, Stats> batMap = batterStats.getOrDefault(player, new HashMap<>());
+            Map<String, Stats> bowlMap = bowlerStats.getOrDefault(player, new HashMap<>());
+
+            final int MIN_BAT_BALLS   = 100;
+            final int MIN_BOWL_BALLS  = 250;
+            final double BAT_PENALTY_WPB  = 0.25;  // batter penalty — worst dismissal rate
+            final double BOWL_PENALTY_WPB = 0.005; // bowler penalty — worst wicket-taking rate (sort descending)
+
+            // ── Batting columns: Avg, SR, Balls, WPB, RPB per role ────────
             for (String role : ROLE_ORDER) {
                 Stats s = batMap.getOrDefault(role, new Stats());
 
-                double baselineRPB = baselineCalculator.getBaselineRunsPerBallForRole(role);
-                double baselineWPB = baselineCalculator.getBaselineWicketsPerBallForRole(role);
+                row.add(s.getBalls() > 0 ? round(s.getBattingAverage()) : "");
+                row.add(s.getBalls() > 0 ? round(s.getBattingStrikeRate()) : "");
+                row.add(s.getBalls());
 
-                double adjRPB = s.getAdjustedRunsPerBall(baselineRPB);
-                double adjWPB = s.getAdjustedWicketsPerBall(baselineWPB);
-
-                row.add(round(s.getBattingAverage()));
-                row.add(round(s.getBattingStrikeRate()));
-                row.add(round(adjRPB));   // Nerfed stat
-                row.add(round(adjWPB));   // Nerfed stat
-                row.add(s.getBalls());    // sample size visibility
+                if (s.getBalls() < MIN_BAT_BALLS) {
+                    row.add(BAT_PENALTY_WPB);
+                    row.add("");
+                } else {
+                    double batBaselineRPB = baselineCalculator.getBaselineRunsPerBallForRole(role);
+                    double batAdjRPB = s.getAdjustedRunsPerBall(batBaselineRPB);
+                    double batAdjWPB = s.getAdjustedWicketsPerBall(sharedWPBBaseline);
+                    row.add(round((batAdjWPB + sharedWPBBaseline) / 2.0));
+                    row.add(round((batAdjRPB + batBaselineRPB) / 2.0));
+                }
             }
 
-            Map<String, Stats> bowlMap = bowlerStats.getOrDefault(player, new HashMap<>());
+            // ── Bowling columns: Balls, Avg, SR, WPB, RPB per hand ────────
+            for (String hand : new String[]{"LHB", "RHB"}) {
+                Stats s = bowlMap.getOrDefault(hand, new Stats());
 
-            Stats vsLHB = bowlMap.getOrDefault("LHB", new Stats());
-            double lhbBaselineRPB = baselineCalculator.getLhbRunsPerBall();
-            double lhbBaselineWPB = baselineCalculator.getLhbWicketsPerBall();
+                row.add(s.getBalls());
+                row.add(s.getBalls() > 0 ? round(s.getBowlingAverage()) : "");
+                row.add(s.getBalls() > 0 ? round(s.getBowlingStrikeRate()) : "");
 
-            row.add(round(vsLHB.getAdjustedRunsPerBall(lhbBaselineRPB)));
-            row.add(round(vsLHB.getAdjustedWicketsPerBall(lhbBaselineWPB)));
-            row.add(vsLHB.getBalls());
-
-            Stats vsRHB = bowlMap.getOrDefault("RHB", new Stats());
-            double rhbBaselineRPB = baselineCalculator.getRhbRunsPerBall();
-            double rhbBaselineWPB = baselineCalculator.getRhbWicketsPerBall();
-
-            row.add(round(vsRHB.getAdjustedRunsPerBall(rhbBaselineRPB)));
-            row.add(round(vsRHB.getAdjustedWicketsPerBall(rhbBaselineWPB)));
-            row.add(vsRHB.getBalls());
+                if (s.getBalls() < MIN_BOWL_BALLS) {
+                    row.add(BOWL_PENALTY_WPB);
+                    row.add("");
+                } else {
+                    double bowlBaselineRPB = hand.equals("LHB")
+                            ? baselineCalculator.getLhbRunsPerBall()
+                            : baselineCalculator.getRhbRunsPerBall();
+                    double bowlAdjRPB = s.getAdjustedRunsPerBall(bowlBaselineRPB);
+                    double bowlAdjWPB = s.getAdjustedWicketsPerBall(sharedWPBBaseline);
+                    double medianBatRPB = bowlBaselineRPB;
+                    row.add(round((sharedWPBBaseline + bowlAdjWPB) / 2.0));
+                    row.add(round((medianBatRPB + bowlAdjRPB) / 2.0));
+                }
+            }
 
             csv.writeRow(row.toArray());
         }

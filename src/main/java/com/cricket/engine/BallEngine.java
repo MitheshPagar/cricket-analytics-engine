@@ -42,14 +42,21 @@ public class BallEngine {
                 .getOrDefault(bowler, Map.of())
                 .getOrDefault(batterHand, new Stats());
 
-        double baselineRPB = baselineCalculator.getBaselineRunsPerBallForRole(bowlRole);
-        double baselineWPB = baselineCalculator.getBaselineWicketsPerBallForRole(bowlRole);
+        // RPB baselines — separate for batter (by bowling type) and bowler (by batter hand)
+        double batBaselineRPB  = baselineCalculator.getBaselineRunsPerBallForRole(bowlRole);
+        double bowlBaselineRPB = batterHand.equals("LHB")
+                ? baselineCalculator.getLhbRunsPerBall()
+                : baselineCalculator.getRhbRunsPerBall();
 
-        double batterRPB = batStats.getAdjustedRunsPerBall(baselineRPB);
-        double batterWPB = batStats.getAdjustedWicketsPerBall(baselineWPB);
+        // WPB baseline — single authoritative value from batter dismissal data
+        // Both batter and bowler stats shrink toward the same dismissal rate
+        double sharedWPBBaseline = baselineCalculator.getOverallWicketsPerBall();
 
-        double bowlerRPB = bowlStats.getAdjustedRunsPerBall(baselineRPB);
-        double bowlerWPB = bowlStats.getAdjustedWicketsPerBall(baselineWPB);
+        double batterRPB = batStats.getAdjustedRunsPerBall(batBaselineRPB);
+        double batterWPB = batStats.getAdjustedWicketsPerBall(sharedWPBBaseline);
+
+        double bowlerRPB = bowlStats.getAdjustedRunsPerBall(bowlBaselineRPB);
+        double bowlerWPB = bowlStats.getAdjustedWicketsPerBall(sharedWPBBaseline);
 
         double finalRPB = (batterRPB + bowlerRPB) / 2.0;
         double finalWPB = (batterWPB + bowlerWPB) / 2.0;
