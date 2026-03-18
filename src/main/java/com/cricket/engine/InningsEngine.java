@@ -94,7 +94,7 @@ public class InningsEngine {
             if (bowlRole   == null || bowlRole.isBlank())   bowlRole   = "RF";
             if (batterHand == null || batterHand.isBlank()) batterHand = "RHB";
 
-            boolean isTail = strikerIndex >= 7;
+            boolean isTail = strikerIndex >= 8;
 
             // Declaration check
             if (declarationEngine != null && target == null) {
