@@ -12,33 +12,30 @@ import java.util.stream.Collectors;
 import com.cricket.BaselineCalculator;
 import com.cricket.Stats;
 
-/**
- * Generates a 90-over bowling plan with realistic spell rotation:
- *  - Bowlers must rest for at least (spell_length / 2) overs after a spell
- *  - Pace bowlers hard-capped at 6 consecutive overs
- *  - Bottom 25% by adjWPB excluded entirely
- *  - Among eligible candidates, best adjWPB chosen
- */
 public class BowlingRecommender {
 
     private final Map<String, Map<String, Stats>> bowlerStats;
     private final BaselineCalculator baselineCalculator;
+    private final PitchRecommender pitchRecommender;
 
     public BowlingRecommender(
             Map<String, Map<String, Stats>> bowlerStats,
-            BaselineCalculator baselineCalculator) {
-        this.bowlerStats = bowlerStats;
+            BaselineCalculator baselineCalculator,
+            PitchRecommender pitchRecommender) {
+        this.bowlerStats       = bowlerStats;
         this.baselineCalculator = baselineCalculator;
+        this.pitchRecommender  = pitchRecommender;
     }
 
     // ── Quality metrics ───────────────────────────────────────────────────
 
     private double getAdjWPB(String name) {
         Map<String, Stats> m = bowlerStats.getOrDefault(name, new HashMap<>());
+        double sharedBaseline = baselineCalculator.getOverallWicketsPerBall();
         double lhb = m.getOrDefault("LHB", new Stats())
-                .getAdjustedWicketsPerBall(baselineCalculator.getLhbWicketsPerBall());
+                .getAdjustedWicketsPerBall(sharedBaseline);
         double rhb = m.getOrDefault("RHB", new Stats())
-                .getAdjustedWicketsPerBall(baselineCalculator.getRhbWicketsPerBall());
+                .getAdjustedWicketsPerBall(sharedBaseline);
         return (lhb + rhb) / 2.0;
     }
 
@@ -54,6 +51,20 @@ public class BowlingRecommender {
 
     private static boolean isSpin(BowlerInfo b) {
         return b.getCategory() == BowlerInfo.Category.SPIN;
+    }
+
+    // Whether pitch recommends spin at this over
+    private boolean spinRecommendedAt(int over) {
+        if (pitchRecommender == null) return over > 25;
+        return pitchRecommender.getRecommendedCategories(over)
+                .contains(BowlerInfo.Category.SPIN);
+    }
+
+    private boolean seamRecommendedAt(int over) {
+        if (pitchRecommender == null) return over <= 20;
+        List<BowlerInfo.Category> cats = pitchRecommender.getRecommendedCategories(over);
+        return cats.contains(BowlerInfo.Category.FAST) ||
+               cats.contains(BowlerInfo.Category.MEDIUM_FAST);
     }
 
     // ── Exclusion ─────────────────────────────────────────────────────────
@@ -82,21 +93,19 @@ public class BowlingRecommender {
 
         if (eligible.isEmpty()) eligible = new ArrayList<>(bowlers);
 
-        // Per-bowler state
-        Map<String, Integer> currentSpell  = new HashMap<>(); // overs bowled this spell
-        Map<String, Integer> restOvers      = new HashMap<>(); // overs rested since last spell
-        Map<String, Integer> requiredRest   = new HashMap<>(); // min rest before eligible again
+        Map<String, Integer> currentSpell = new HashMap<>();
+        Map<String, Integer> restOvers    = new HashMap<>();
+        Map<String, Integer> requiredRest = new HashMap<>();
 
         for (BowlerInfo b : eligible) {
             currentSpell.put(b.getName(), 0);
-            restOvers.put(b.getName(), 99);   // start fully rested
+            restOvers.put(b.getName(), 99);
             requiredRest.put(b.getName(), 0);
         }
 
-        // Use array so elements can be mutated without effectively-final issues
-        String[] ends = new String[2]; // ends[0] = end1, ends[1] = end2
+        String[] ends = new String[2];
 
-        // Pick opening two pace bowlers (or best two overall)
+        // Open with best two pace bowlers
         List<BowlerInfo> openers = eligible.stream()
                 .filter(b -> isPaceMedium(b.getRole()))
                 .limit(2)
@@ -115,7 +124,6 @@ public class BowlingRecommender {
         }
 
         for (int over = 1; over <= 90; over++) {
-            // Alternate ends each over
             boolean isEnd1Turn = (over % 2 == 1);
             String activeName = isEnd1Turn ? ends[0] : ends[1];
             String otherName  = isEnd1Turn ? ends[1] : ends[0];
@@ -123,23 +131,32 @@ public class BowlingRecommender {
             BowlerInfo activeInfo = getInfo(activeName, eligible);
             String role = activeInfo != null ? activeInfo.getRole() : "";
 
-            int spell  = currentSpell.getOrDefault(activeName, 0);
+            int spell   = currentSpell.getOrDefault(activeName, 0);
             boolean hardCap = isPaceMedium(role) && spell >= 6;
 
-            // Decide if we need a bowling change at this end
-            boolean needChange = hardCap || (over == 81 && isEnd1Turn) || (over == 82 && !isEnd1Turn);
+            // Spinners hard-capped at 12 consecutive overs
+            boolean spinCap = isSpin(activeInfo) && spell >= 12;
 
-            // Probabilistic change for long spells
+            boolean needChange = hardCap || spinCap;
+
+            // Pressure-based change
             if (!needChange && spell >= 3) {
                 double pressure = computePressure(activeName, role, spell, over);
                 if (pressure >= 10.0) needChange = true;
+            }
+
+            // Force change if pitch doesn't recommend this bowler type at this over
+            if (!needChange && spell >= 2) {
+                boolean isSpinner = isSpin(activeInfo);
+                if (isSpinner && !spinRecommendedAt(over)) needChange = true;
+                if (!isSpinner && isPaceMedium(role) && !seamRecommendedAt(over)
+                        && spinRecommendedAt(over) && over > 30) needChange = true;
             }
 
             if (needChange) {
                 BowlerInfo next = pickNext(eligible, activeName, otherName,
                         currentSpell, restOvers, requiredRest, over);
                 if (next != null && !next.getName().equals(activeName)) {
-                    // End the current bowler's spell — set required rest
                     int spellLength = currentSpell.getOrDefault(activeName, 0);
                     requiredRest.put(activeName, Math.max(2, spellLength / 2));
                     restOvers.put(activeName, 0);
@@ -151,18 +168,14 @@ public class BowlingRecommender {
             }
 
             plan.assign(over, activeName);
-
-            // Update state
             currentSpell.merge(activeName, 1, Integer::sum);
 
-            // Increment rest counter for non-bowling eligible bowlers
             for (BowlerInfo b : eligible) {
                 if (!b.getName().equals(activeName) && !b.getName().equals(otherName)) {
                     restOvers.merge(b.getName(), 1, Integer::sum);
                 }
             }
 
-            // Update end assignments
             if (isEnd1Turn) ends[0] = activeName;
             else            ends[1] = activeName;
         }
@@ -175,13 +188,18 @@ public class BowlingRecommender {
     private double computePressure(String name, String role, int spell, int over) {
         double adjWPB = getAdjWPB(name);
         double wicketCredit = 5.0 * adjWPB * 6.0;
-        double x = -wicketCredit; // good bowlers resist change longer
+        double x = -wicketCredit;
 
         if (isPaceMedium(role)) {
-            x += 2.0 * spell;
+            x += 2.0 * spell;   // pacers tire quickly
         } else {
-            x += 0.4 * spell; // spinners can bowl longer
+            x += 1.2 * spell;   // spinners also build pressure but slower (was 0.4 — too low)
         }
+
+        // Pitch-aware: if pitch doesn't suit this type, increase pressure to change
+        boolean isSpinner = isSpin(getInfoByRole(role));
+        if (isSpinner && !spinRecommendedAt(over)) x += 4.0;
+        if (!isSpinner && isPaceMedium(role) && !seamRecommendedAt(over)) x += 2.0;
 
         if (over < 20) x *= 0.75;
         if (x < 1) x = 1;
@@ -202,19 +220,15 @@ public class BowlingRecommender {
         boolean newBall = over <= 10 || over >= 81;
 
         List<BowlerInfo> candidates = eligible.stream()
-                // Can't be the bowler at either end right now
                 .filter(b -> !b.getName().equals(currentBowler))
                 .filter(b -> !b.getName().equals(otherEndBowler))
-                // Must have rested enough
                 .filter(b -> restOvers.getOrDefault(b.getName(), 99)
                              >= requiredRest.getOrDefault(b.getName(), 0))
-                // Hard cap: pace/medium can't bowl if at 6 consecutive
                 .filter(b -> !(isPaceMedium(b.getRole())
                              && currentSpell.getOrDefault(b.getName(), 0) >= 6))
                 .collect(Collectors.toList());
 
         if (candidates.isEmpty()) {
-            // Relax rest requirement and try again
             candidates = eligible.stream()
                     .filter(b -> !b.getName().equals(currentBowler))
                     .filter(b -> !b.getName().equals(otherEndBowler))
@@ -223,24 +237,33 @@ public class BowlingRecommender {
 
         if (candidates.isEmpty()) return getInfo(currentBowler, eligible);
 
-        // New ball: prefer pace/medium
+        // New ball: always prefer pace/medium
         if (newBall) {
             List<BowlerInfo> pacers = candidates.stream()
                     .filter(b -> isPaceMedium(b.getRole()))
                     .collect(Collectors.toList());
             if (!pacers.isEmpty()) candidates = pacers;
         } else {
-            // Middle overs: if replacing a pacer, prefer spinner
-            BowlerInfo curr = getInfo(currentBowler, eligible);
-            if (curr != null && isPaceMedium(curr.getRole())) {
+            // Use pitch to decide seam vs spin preference
+            boolean spinOk  = spinRecommendedAt(over);
+            boolean seamOk  = seamRecommendedAt(over);
+
+            if (seamOk && !spinOk) {
+                // Seam pitch — prefer pacers
+                List<BowlerInfo> pacers = candidates.stream()
+                        .filter(b -> isPaceMedium(b.getRole()))
+                        .collect(Collectors.toList());
+                if (!pacers.isEmpty()) candidates = pacers;
+            } else if (spinOk && !seamOk) {
+                // Spin pitch — prefer spinners
                 List<BowlerInfo> spinners = candidates.stream()
                         .filter(b -> isSpin(b))
                         .collect(Collectors.toList());
                 if (!spinners.isEmpty()) candidates = spinners;
             }
+            // If both or neither recommended, use best adjWPB from all candidates
         }
 
-        // Best adjWPB among eligible candidates
         return candidates.stream()
                 .max(Comparator.comparingDouble(b -> getAdjWPB(b.getName())))
                 .orElse(null);
@@ -250,5 +273,10 @@ public class BowlingRecommender {
         return eligible.stream()
                 .filter(b -> b.getName().equals(name))
                 .findFirst().orElse(null);
+    }
+
+    // Helper for pressure when we only have role string
+    private BowlerInfo getInfoByRole(String role) {
+        return new BowlerInfo("_tmp", role != null ? role : "");
     }
 }

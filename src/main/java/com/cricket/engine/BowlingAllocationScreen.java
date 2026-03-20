@@ -74,7 +74,7 @@ public class BowlingAllocationScreen {
     public void setStatsBundle(
             Map<String, Map<String, com.cricket.Stats>> bowlerStats,
             BaselineCalculator baselineCalculator) {
-        this.bowlingRecommender = new BowlingRecommender(bowlerStats, baselineCalculator);
+        this.bowlingRecommender = new BowlingRecommender(bowlerStats, baselineCalculator, recommender);
     }
 
     public void show(Stage stage) {

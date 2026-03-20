@@ -100,7 +100,7 @@ public class SilentMatchEngine {
 
         DeclarationEngine dec = inningsNum < 4 ? decEngine : null;
         InningsResult r = inningsEngine.simulateInnings(
-                batting, bowlingOrder, remaining, target, dec, inningsNum, lead, plan);
+                batting, bowlingOrder, remaining, target, dec, inningsNum, lead);
         matchBalls += r.getBalls();
         pitch.deteriorate();
         return r;

@@ -1,8 +1,6 @@
 package com.cricket.engine;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -15,11 +13,15 @@ public class InningsEngine {
     private final PlayerRoleLoader roleLoader;
     private final Random random = new Random();
 
-    public InningsEngine(BallEngine ballEngine, PlayerRoleLoader roleLoader) {
+    public InningsEngine(BallEngine ballEngine,
+                         PlayerRoleLoader roleLoader) {
         this.ballEngine = ballEngine;
         this.roleLoader = roleLoader;
     }
 
+    /**
+     * Simulate an innings without declaration support (e.g. 4th innings / chases).
+     */
     public InningsResult simulateInnings(
             List<String> battingOrder,
             List<String> bowlingOrder,
@@ -27,9 +29,22 @@ public class InningsEngine {
             Integer target
     ) {
         return simulateInnings(battingOrder, bowlingOrder, maxBalls, target,
-                null, 0, 0, null);
+                null, 0, 0);
     }
 
+    /**
+     * Simulate an innings with optional declaration logic.
+     *
+     * @param battingOrder      batting lineup
+     * @param bowlingOrder      bowling lineup
+     * @param maxBalls          max balls allowed (match time limit)
+     * @param target            run target to chase (null if not chasing)
+     * @param declarationEngine declaration engine to poll each ball (null = no declaration)
+     * @param inningsNumber     1-based innings number in the match
+     * @param firstInningsLead  runs scored in batting team's first innings minus
+     *                          opposition first innings (used to compute live lead).
+     *                          Pass 0 for innings 1 and 2 where lead = current runs.
+     */
     public InningsResult simulateInnings(
             List<String> battingOrder,
             List<String> bowlingOrder,
@@ -39,108 +54,85 @@ public class InningsEngine {
             int inningsNumber,
             int firstInningsLead
     ) {
-        return simulateInnings(battingOrder, bowlingOrder, maxBalls, target,
-                declarationEngine, inningsNumber, firstInningsLead, null);
-    }
 
-    public InningsResult simulateInnings(
-            List<String> battingOrder,
-            List<String> bowlingOrder,
-            int maxBalls,
-            Integer target,
-            DeclarationEngine declarationEngine,
-            int inningsNumber,
-            int firstInningsLead,
-            BowlingPlan bowlingPlan
-    ) {
         int totalRuns = 0;
-        int wickets   = 0;
-        int balls     = 0;
+        int wickets = 0;
+        int balls = 0;
 
-        int strikerIndex    = 0;
+        int strikerIndex = 0;
         int nonStrikerIndex = 1;
         int nextBatterIndex = 2;
 
-        int bowlerIndex = 0;  // fallback only
+        int bowlerIndex = 0;
+        int spellBalls = 0;
 
-        // ── Scorecard tracking ────────────────────────────────────────────
-        Map<String, BatterRecord>  batRecords  = new LinkedHashMap<>();
-        Map<String, BowlerRecord>  bowlRecords = new LinkedHashMap<>();
-        List<FallOfWicket>         fow         = new ArrayList<>();
-        List<Partnership>          partnerships = new ArrayList<>();
-
-        for (String name : battingOrder) batRecords.put(name, new BatterRecord(name));
-
-        // Current partnership
-        Partnership currentPartnership = new Partnership(
-                battingOrder.get(0), battingOrder.get(1));
-
-        // Declaration batter scores
-        Map<String, Integer> declarationScores = new HashMap<>();
-        for (String b : battingOrder) declarationScores.put(b, 0);
+        // Per-batter score tracking for declaration courtesy rule
+        Map<String, Integer> batterScores = new HashMap<>();
+        for (String batter : battingOrder) {
+            batterScores.put(batter, 0);
+        }
 
         boolean declared = false;
 
         while (wickets < 10 && balls < maxBalls) {
 
-            String striker    = battingOrder.get(strikerIndex);
-            int currentOver   = (balls / 6) + 1; // 1-based over number
-            String bowler     = (bowlingPlan != null && bowlingPlan.getAssignment(currentOver) != null)
-                    ? bowlingPlan.getAssignment(currentOver)
-                    : bowlingOrder.get(bowlerIndex % bowlingOrder.size());
-            String bowlRole   = roleLoader.getBowlRole(bowler);
+            String striker = battingOrder.get(strikerIndex);
+            String bowler = bowlingOrder.get(bowlerIndex);
+
+            String bowlRole = roleLoader.getBowlRole(bowler);
             String batterHand = roleLoader.getBatRole(striker);
 
-            if (bowlRole   == null || bowlRole.isBlank())   bowlRole   = "RF";
+            // Fallback if role missing
+            if (bowlRole == null || bowlRole.isBlank()) bowlRole = "RF";
             if (batterHand == null || batterHand.isBlank()) batterHand = "RHB";
 
-            boolean isTail = strikerIndex >= 8;
+            boolean isTail = strikerIndex >= 7;
 
-            // Declaration check
+            // --- Declaration check (before each ball) ---
             if (declarationEngine != null && target == null) {
-                double inningsOvers   = balls / 6.0;
+
+                double inningsOvers = balls / 6.0;
                 double remainingOvers = (maxBalls - balls) / 6.0;
+
+                // Lead = first innings lead baseline + runs scored this innings
+                // For innings 1: firstInningsLead=0, lead just equals totalRuns
+                // For innings 2: firstInningsLead = -(opposition 1st innings), lead = totalRuns + firstInningsLead
+                // For innings 3: firstInningsLead = a1 - b1, lead = totalRuns + firstInningsLead
                 int lead = totalRuns + firstInningsLead;
+
                 if (declarationEngine.shouldDeclare(
-                        inningsNumber, totalRuns, inningsOvers,
-                        lead, remainingOvers, declarationScores)) {
+                        inningsNumber,
+                        totalRuns,
+                        inningsOvers,
+                        lead,
+                        remainingOvers,
+                        batterScores
+                )) {
                     declared = true;
                     break;
                 }
             }
 
             BallOutcome outcome = ballEngine.simulateBall(
-                    striker, bowler, bowlRole, batterHand);
+                    striker,
+                    bowler,
+                    bowlRole,
+                    batterHand
+            );
 
             balls++;
-
-            // Ensure bowler record exists
-            bowlRecords.computeIfAbsent(bowler, BowlerRecord::new);
-            BatterRecord batRec  = batRecords.get(striker);
-            BowlerRecord bowlRec = bowlRecords.get(bowler);
+            spellBalls++;
 
             if (outcome.isWicket()) {
+
                 wickets++;
-                batRec.record(0, true);
-                batRec.dismissalInfo = "b " + bowler;
-                bowlRec.record(0, true);
-
-                // Partnership ends — count the wicket ball
-                currentPartnership.record(0);
-                partnerships.add(currentPartnership);
-
-                // Fall of wicket
-                fow.add(new FallOfWicket(wickets, striker, totalRuns, balls));
 
                 // Last wicket fragility
-                if (wickets == 9 && random.nextDouble() < 0.15) break;
+                if (wickets == 9 && random.nextDouble() < 0.15) {
+                    break;
+                }
 
                 if (nextBatterIndex < battingOrder.size()) {
-                    // New batter comes in — start new partnership
-                    String newBatter = battingOrder.get(nextBatterIndex);
-                    String otherBatter = battingOrder.get(nonStrikerIndex);
-                    currentPartnership = new Partnership(newBatter, otherBatter);
-
                     strikerIndex = nextBatterIndex;
                     nextBatterIndex++;
                 } else {
@@ -148,57 +140,60 @@ public class InningsEngine {
                 }
 
             } else {
+
                 int runs = outcome.getRuns();
 
-                if (isTail && runs >= 4 && random.nextDouble() < 0.25) runs = 1;
+                // Tail nerf: positions 8-11 score much less
+                if (isTail) {
+                    if (runs == 6) {
+                        // Sixes become 1s 70% of the time
+                        if (random.nextDouble() < 0.70) runs = 1;
+                    } else if (runs == 4) {
+                        // Fours become dots/singles 60% of the time
+                        double r = random.nextDouble();
+                        if (r < 0.35) runs = 0;
+                        else if (r < 0.60) runs = 1;
+                    } else if (runs == 2 || runs == 3) {
+                        // Twos/threes become singles 40% of the time
+                        if (random.nextDouble() < 0.40) runs = 1;
+                    }
+                }
 
                 totalRuns += runs;
-                batRec.record(runs, false);
-                bowlRec.record(runs, false);
-                currentPartnership.record(runs);
-                declarationScores.merge(striker, runs, Integer::sum);
 
-                if (target != null && totalRuns >= target) break;
+                // Update individual batter score
+                batterScores.merge(striker, runs, Integer::sum);
 
+                if (target != null && totalRuns >= target) {
+                    break;
+                }
+
+                // Strike rotation for odd runs
                 if (runs % 2 == 1) {
                     int temp = strikerIndex;
-                    strikerIndex    = nonStrikerIndex;
+                    strikerIndex = nonStrikerIndex;
                     nonStrikerIndex = temp;
-                    // Don't recreate partnership — just swap ends
                 }
             }
 
-            // End of over — swap ends
+            // End of over logic
             if (balls % 6 == 0) {
+
+                // Swap strike at end of over
                 int temp = strikerIndex;
-                strikerIndex    = nonStrikerIndex;
+                strikerIndex = nonStrikerIndex;
                 nonStrikerIndex = temp;
 
-                // Fallback rotation if no plan
-                if (bowlingPlan == null) {
-                    bowlerIndex = (bowlerIndex + 1) % bowlingOrder.size();
+                // 5-over spell rotation
+                if (spellBalls >= 30) {
+                    bowlerIndex =
+                            (bowlerIndex + 1) % bowlingOrder.size();
+                    spellBalls = 0;
                 }
             }
         }
 
-        // Close unfinished partnership
-        if (wickets < 10 || declared) {
-            partnerships.add(currentPartnership);
-        }
-
-        // Build ordered batting/bowling cards
-        List<BatterRecord> battingCard = new ArrayList<>();
-        for (String name : battingOrder) {
-            BatterRecord rec = batRecords.get(name);
-            if (rec != null && (rec.balls > 0 || battingOrder.indexOf(name) <= wickets + 1)) {
-                battingCard.add(rec);
-            }
-        }
-
-        List<BowlerRecord> bowlingCard = new ArrayList<>(bowlRecords.values());
-
-        return new InningsResult(totalRuns, wickets, balls, declared,
-                battingCard, bowlingCard, fow, partnerships);
+        return new InningsResult(totalRuns, wickets, balls, declared);
     }
 
     public void setPitch(PitchProfile pitch) {
